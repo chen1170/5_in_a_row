@@ -4,6 +4,8 @@
 #include "parallel.h"
 #include "board.h"
 
+#include <stdio.h>
+
 #define MAX_DEPTH 6
 #define MAX_PLAYER BLACK
 #define MIN_PLAYER WHITE
@@ -13,20 +15,39 @@ static int is_game_over();
 static int count_consecutive(int row, int col, int dx, int dy, PieceType piece);
 static int evaluate_position(int row, int col, PieceType piece);
 
+extern int rank, size;  // Declared in main
+
+MPI_Request req;
+int flag;
+int signalBuf;
+int work_signal = 1;
+int terminate_signal = 0;
+int WORK_TAG = 0;
+int IDLE_TAG = 1;
+int task_count = 0;
+
 void init_parallel_env() {
     omp_set_num_threads(omp_get_max_threads());
 }
 
 void cleanup_parallel_env() {
     // 如果需要清理并行环境，可以在这里添加代码
+    // Send termination signals to other MPI processes to shutdown the workers
+        signalBuf = 0;
+        for (int i = 1; i < size; i++) {
+            printf("Sending term signal to p(%d)\n", i);
+            MPI_Isend(&signalBuf, 1, MPI_INT, i, WORK_TAG, MPI_COMM_WORLD, &req);
+        }
 }
 
 void get_best_move_parallel(int *row, int *col, PieceType current_player) {
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
     if (rank == 0) {
+        // Wake up workers
+        signalBuf = 1;
+        for (int i = 1; i < size; i++) {
+            MPI_Isend(&signalBuf, 1, MPI_INT, i, WORK_TAG, MPI_COMM_WORLD, &req);
+        }
+
         // 主进程逻辑
         int moves[BOARD_SIZE * BOARD_SIZE][2];
         int move_count = 0;
@@ -69,39 +90,58 @@ void get_best_move_parallel(int *row, int *col, PieceType current_player) {
         *row = best_move[0];
         *col = best_move[1];
     } else {
-        parallel_worker(current_player);
+        // Don't launch wokers here... they are launched from main.
+        //parallel_worker(current_player);
     }
 }
 
 void parallel_worker(PieceType current_player) {
-    int moves[BOARD_SIZE * BOARD_SIZE][2];
-    MPI_Status status;
-    MPI_Probe(0, 0, MPI_COMM_WORLD, &status);
-    int move_count;
-    MPI_Get_count(&status, MPI_INT, &move_count);
-    move_count /= 2;
-    MPI_Recv(moves, move_count * 2, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    int best_score = (current_player == MAX_PLAYER) ? INT_MIN : INT_MAX;
-    int best_move[2];
-
-#pragma omp parallel for schedule(dynamic)
-    for (int i = 0; i < move_count; i++) {
-        int score = evaluate_move(moves[i][0], moves[i][1], current_player, MAX_DEPTH);
-#pragma omp critical
+    // Wait for a signal to do work...
+    while (1)
         {
-            if ((current_player == MAX_PLAYER && score > best_score) ||
-                (current_player == MIN_PLAYER && score < best_score)) {
-                best_score = score;
-                best_move[0] = moves[i][0];
-                best_move[1] = moves[i][1];
+            MPI_Recv(&signalBuf, 1, MPI_INT, 0, WORK_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+            if (signalBuf == work_signal)
+            {
+                task_count++;
+
+                int moves[BOARD_SIZE * BOARD_SIZE][2];
+                MPI_Status status;
+                MPI_Probe(0, 0, MPI_COMM_WORLD, &status);
+                int move_count;
+                MPI_Get_count(&status, MPI_INT, &move_count);
+                move_count /= 2;
+                MPI_Recv(moves, move_count * 2, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+                int best_score = (current_player == MAX_PLAYER) ? INT_MIN : INT_MAX;
+                int best_move[2];
+                
+                #pragma omp parallel for schedule(dynamic)
+                for (int i = 0; i < move_count; i++) {
+                    int score = evaluate_move(moves[i][0], moves[i][1], current_player, MAX_DEPTH);
+                    #pragma omp critical
+                    {
+                        if ((current_player == MAX_PLAYER && score > best_score) ||
+                            (current_player == MIN_PLAYER && score < best_score)) {
+                            best_score = score;
+                            best_move[0] = moves[i][0];
+                            best_move[1] = moves[i][1];
+                        }
+                    }
+                }
+
+                // 发送最佳结果给主进程
+                MPI_Send(&best_score, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+                MPI_Send(best_move, 2, MPI_INT, 0, 0, MPI_COMM_WORLD);
+
+            }
+
+            if (signalBuf == terminate_signal)
+            {
+                printf("Process %d terminating... %d tasks completed.\n", rank, task_count);
+                break;
             }
         }
-    }
-
-    // 发送最佳结果给主进程
-    MPI_Send(&best_score, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    MPI_Send(best_move, 2, MPI_INT, 0, 0, MPI_COMM_WORLD);
 }
 
 int evaluate_move(int row, int col, PieceType player, int depth) {
@@ -118,7 +158,7 @@ int parallel_minimax(int depth, int alpha, int beta, PieceType player) {
 
     int best_score = (player == MAX_PLAYER) ? INT_MIN : INT_MAX;
 
-#pragma omp parallel for reduction(max:best_score) if(depth > 2)
+    #pragma omp parallel for reduction(max:best_score) if(depth > 2)
     for (int i = 0; i < BOARD_SIZE; i++) {
         for (int j = 0; j < BOARD_SIZE; j++) {
             if (is_valid_move(i, j)) {
