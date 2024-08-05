@@ -4,9 +4,9 @@
 #include <mpi.h>
 #include "parallel.h"
 
-int main(int argc, char* argv[]) {
-    int rank, size;
+int rank, size;
 
+int main(int argc, char* argv[]) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -27,8 +27,10 @@ int main(int argc, char* argv[]) {
 
         init_game(mode);
         run_game();
+        printf("Rank(0) Done...\n");
     } else {
         // 工作进程等待并执行并行任务
+        init_parallel_env();
         parallel_worker(BLACK);  // 初始玩家设为 BLACK，但在实际运行中会被正确的玩家替换
     }
 
