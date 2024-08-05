@@ -11,9 +11,9 @@ void init_game(GameMode mode) {
     current_mode = mode;
     current_player = BLACK;
     init_board();
-    if (mode == PARALLEL_AI || mode == HUMAN_VS_PARALLEL_AI) {
+    //if (mode == PARALLEL_AI || mode == HUMAN_VS_PARALLEL_AI) {
         init_parallel_env();
-    }
+    //}
     srand(time(NULL));
 }
 
@@ -36,7 +36,7 @@ static void get_parallel_ai_move(int* row, int* col) {
 static void get_human_move(int* row, int* col) {
     char move[10];
     do {
-        printf("Enter your move (e.g., e8): ");
+        printf("Enter your move (e.g., e8): \n");
         scanf("%s", move);
     } while (!parse_move(move, row, col));
 }
@@ -90,7 +90,7 @@ void run_game() {
         }
     }
 
-    if (current_mode == PARALLEL_AI || current_mode == HUMAN_VS_PARALLEL_AI) {
+    //if (current_mode == PARALLEL_AI || current_mode == HUMAN_VS_PARALLEL_AI) {
         cleanup_parallel_env();
-    }
+    //}
 }
