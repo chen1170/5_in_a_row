@@ -14,7 +14,7 @@ void init_board() {
 }
 
 void print_board() {
-    printf("  a b c d e f g h i j k l m n o\n");
+    printf("   a b c d e f g h i j k l m n o\n");
     for (int i = 0; i < BOARD_SIZE; i++) {
         printf("%2d ", i + 1);
         for (int j = 0; j < BOARD_SIZE; j++) {
