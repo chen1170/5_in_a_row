@@ -47,22 +47,24 @@ static int get_ai_move() {
 }
 
 static int get_parallel_ai_move() {
-    int * from_row;
-    int * from_col;
-    int * to_row;
-    int * to_col;
+    int from_row;
+    int from_col;
+    int to_row;
+    int to_col;
     
+    //printf("Current player is %d\n", current_player);
+
     Piece * board_pointer = board[0];
-    printf("Parallel AI move...\n");
-    int p = get_best_move_parallel(from_row, from_col, to_row, to_col, board_pointer, current_player);
+    //printf("Parallel AI move...\n");
+    int p = get_best_move_parallel(&from_row, &from_col, &to_row, &to_col, board_pointer, current_player);
     if (p) {
         printf("Parallel AI cannot find a valid move.\n");
         return p;
     }
 
-    printf("Parallel AI move: %c%d %c%d\n", 'a' + *from_row, *from_col + 1, 'a' + *to_row, *to_col + 1);
+    printf("Parallel AI move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
 
-    update_board(*from_row, *from_col, *to_row, *to_col, current_player);
+    update_board(from_row, from_col, to_row, to_col, current_player);
 
     return 0;
 }
@@ -70,11 +72,12 @@ static int get_parallel_ai_move() {
 static void get_human_move() {
     char move_from[10];
     char move_to[10];
+    //printf("Current player is %d\n", current_player);
     do {
         printf("Enter your move (e.g., e6 e8): \n");
         scanf("%s", move_from);
         scanf("%s", move_to);
-    } while (!parse_move(move_from, move_to, current_player));
+    } while (!parse_move(move_from, move_to, current_player));    
 }
 
 void run_game() {
@@ -128,7 +131,10 @@ void run_game() {
                 printf("Black wins!\n");
         }
         else
+        {
+            //printf("Switching players...\n");
             switch_player();
+        }
     }
 
     //if (current_mode == PARALLEL_AI || current_mode == HUMAN_VS_PARALLEL_AI) {

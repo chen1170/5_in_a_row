@@ -663,7 +663,8 @@ int is_valid_move_for_soldier(int from_row, int from_col, int to_row, int to_col
 
 int is_valid_move(int from_row, int from_col, int to_row, int to_col, P_Colour player)
 {
-    // printf("Validating move...\n");
+
+    //printf("Validating move...\n");
     // printf("Current player: %d\n", player);
 
     // printf("From: %d %d\n", from_row, from_col);
@@ -677,62 +678,80 @@ int is_valid_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
     // Make sure the player is moving their own piece
     if (board[from_row][from_col].colour != player)
     {
+        //printf("You must move your own piece\n");
+        return 0;
+    }
+
+    // Check that we are not moving onto ourselves
+    if (from_row == to_row && from_col == to_col)
+    {
+        //printf("You must move to a different position\n");
         return 0;
     }
 
     // Check if the move is within the board
     if (from_row < 0 || from_row >= X_BOARD_SIZE_X || from_col < 0 || from_col >= X_BOARD_SIZE_Y)
     {
+        //printf("You must move within the board\n");
         return 0;
     }
 
     if (to_row < 0 || to_row >= X_BOARD_SIZE_X || to_col < 0 || to_col >= X_BOARD_SIZE_Y)
     {
+        //printf("You must move within the board\n");
         return 0;
     }
 
     // Generals
     if (board[from_row][from_col].type == JIANG)
     {
+        //printf("Validating general move...\n");
         return is_valid_move_for_general(from_row, from_col, to_row, to_col);
     }
 
     // Advisors
     if (board[from_row][from_col].type == SHI)
     {
+        //printf("Validating advisor move...\n");
         return is_valid_move_for_advisor(from_row, from_col, to_row, to_col);
     }
 
     // Elephants
     if (board[from_row][from_col].type == XIANG)
     {
+        //printf("Validating elephant move...\n");
         return is_valid_move_for_elephant(from_row, from_col, to_row, to_col);
     }
 
     // Horses
     if (board[from_row][from_col].type == MA)
     {
+        //printf("Validating horse move...\n");
         return is_valid_move_horse(from_row, from_col, to_row, to_col);
     }
 
     // Chariots
     if (board[from_row][from_col].type == JU)
     {
+        //printf("Validating chariot move...\n");
         return is_valid_move_for_chariot(from_row, from_col, to_row, to_col);
     }
 
     // Cannons
     if (board[from_row][from_col].type == PAO)
     {
+        //printf("Validating cannon move...\n");
         return is_valid_move_for_cannon(from_row, from_col, to_row, to_col);
     }
 
     // Soldiers
     if (board[from_row][from_col].type == BING)
     {
+        //printf("Validating soldier move...\n");
         return is_valid_move_for_soldier(from_row, from_col, to_row, to_col);
     }
 
+    //printf("Invalid move\n");
     // If we get here, the move is not valid, either we don't have a piece or something else went wrong
     return 0;
 }
