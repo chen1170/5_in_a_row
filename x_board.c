@@ -595,14 +595,14 @@ int is_valid_move_for_soldier(int from_row, int from_col, int to_row, int to_col
     {
         if (board[from_row][from_col].colour == BLACK)
         {
-            if (to_row <= from_row)
+            if (to_row <= from_row && to_row <= 4)
             {
                 return 0;
             }
         }
         if (board[from_row][from_col].colour == WHITE)
         {
-            if (to_row >= from_row)
+            if (to_row >= from_row && to_row >= 5)
             {
                 return 0;
             }

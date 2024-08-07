@@ -129,6 +129,7 @@ void run_game() {
         }
         else
             switch_player();
+            printf("switch_player!\n");
     }
 
     //if (current_mode == PARALLEL_AI || current_mode == HUMAN_VS_PARALLEL_AI) {

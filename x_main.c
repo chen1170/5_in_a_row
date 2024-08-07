@@ -27,7 +27,9 @@ int main(int argc, char* argv[]) {
 
         init_game(mode);
         //print_board();
+        // init_parallel_env();
         run_game();
+        // cleanup_parallel_env();
         //printf("Rank(0) Done...\n");
     } else {
         // 工作进程等待并执行并行任务

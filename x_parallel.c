@@ -65,229 +65,164 @@ void createPieceMPIType(MPI_Datatype *newtype)
     MPI_Type_commit(newtype);
 }
 
-int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_col, Piece *board, P_Colour current_player)
-{
-
-    // int * from_row;
-    // int * from_col;
-    // int * to_row;
-    // int * to_col;
-
-    if (rank == 0)
-    {
-        // Wake up workers
-        signalBuf = 1;
-        for (int i = 1; i < size; i++)
-        {
+int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_col, Piece *board, P_Colour current_player) {
+    if (rank == 0) {
+        signalBuf = work_signal;
+        for (int i = 1; i < size; i++) {
             MPI_Isend(&signalBuf, 1, MPI_INT, i, WORK_TAG, MPI_COMM_WORLD, &req);
+            MPI_Wait(&req, MPI_STATUS_IGNORE);
         }
 
-        // 主进程逻辑
-
-        // Send the board to all processes...
         createPieceMPIType(&pieceType);
-        int piece_size = sizeof(Piece);
         int board_size = X_BOARD_SIZE_X * X_BOARD_SIZE_Y;
         MPI_Bcast(board, board_size, pieceType, 0, MPI_COMM_WORLD);
 
-        int moves[X_BOARD_SIZE_X * X_BOARD_SIZE_Y][2];
-        int move_count = 0;
-
-        // How many pieces for this player on the board
         int piece_count = 0;
-        for (int i = 0; i < X_BOARD_SIZE_X; i++)
-        {
-            for (int j = 0; j < X_BOARD_SIZE_Y; j++)
-            {
-                if (get_piece(i, j).colour == current_player)
-                {
+        for (int i = 0; i < X_BOARD_SIZE_X; i++) {
+            for (int j = 0; j < X_BOARD_SIZE_Y; j++) {
+                if (get_piece(i, j).colour == current_player) {
                     piece_count++;
                 }
             }
         }
 
-        //printf("Rank(%d) get_best_move_parallel\n", rank);
+        int piece_index = 0;
+        int results_received = 0;
+        MPI_Request send_request, recv_request;
+        MPI_Status status;
 
-        // Index all of the pieces for this player.
-        int pieces_indexed = 0;
-        int piece_index[piece_count][5];
-        // [0] and [1] are the from_row and from_col
-        // [2] and [3] will be the to_row and to_col
-        // [4] will be the score (as projected after MAX_DEPTH moves down this path)
-        for (int i = 0; i < X_BOARD_SIZE_X; i++)
-        {
-            for (int j = 0; j < X_BOARD_SIZE_Y; j++)
-            {
-                if (get_piece(i, j).colour == current_player)
-                {
-                    piece_index[pieces_indexed][0] = i;
-                    piece_index[pieces_indexed][1] = j;
-                    pieces_indexed++;
+        int best_score = INT_MIN;
+        int best_from_row = -1, best_from_col = -1, best_to_row = -1, best_to_col = -1;
+
+        while (results_received < piece_count) {
+            printf("Master waiting for idle signal...\n");
+            MPI_Irecv(&signalBuf, 1, MPI_INT, MPI_ANY_SOURCE, IDLE_TAG, MPI_COMM_WORLD, &recv_request);
+            MPI_Wait(&recv_request, &status);
+
+            if (piece_index < piece_count) {
+                int from_row = -1;
+                int from_col = -1;
+                int count = 0;
+                for (int i = 0; i < X_BOARD_SIZE_X; i++) {
+                    for (int j = 0; j < X_BOARD_SIZE_Y; j++) {
+                        if (get_piece(i, j).colour == current_player) {
+                            if (count == piece_index) {
+                                from_row = i;
+                                from_col = j;
+                                break;
+                            }
+                            count++;
+                        }
+                    }
+                    if (from_row != -1) {
+                        break;
+                    }
                 }
+
+                int piece[4] = { piece_index, from_row, from_col, current_player };
+                printf("Master sending piece %d (%d, %d) to worker %d\n", piece_index, from_row, from_col, signalBuf);
+                MPI_Isend(piece, 4, MPI_INT, signalBuf, 0, MPI_COMM_WORLD, &send_request);
+                MPI_Wait(&send_request, &status);
+                piece_index++;
             }
-        }
 
-        //printf("Rank(%d) piece_count: %d\n", rank, piece_count);
-
-        // Now wait for workers to report they are available to work
-        int idle_workers = size - 1;
-        int piece_index_count = 0;
-        while (piece_index_count < pieces_indexed)
-        {
-            //printf("Master waiting for idle signal...piece_index_count = %d \n", piece_index_count);
-            MPI_Recv(&signalBuf, 1, MPI_INT, MPI_ANY_SOURCE, IDLE_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            //printf("Master received idle signal from %d\n", signalBuf);
-
-            // Send work to the worker
-            int piece[4];
-            piece[0] = piece_index_count;                 // The index of of the piece in the piece_index array
-            piece[1] = piece_index[piece_index_count][0]; // The row of the piece on the board
-            piece[2] = piece_index[piece_index_count][1]; // The col of the piece on the board
-            piece[3] = current_player;                       // The number of pieces for this player on the board
-            //printf("Master sending piece: %d at (%d,%d) to worker %d\n", piece[0], piece[1], piece[2], signalBuf);
-            MPI_Send(piece, 3, MPI_INT, signalBuf, 0, MPI_COMM_WORLD);
-            piece_index_count++;
-            piece_count--;
-            idle_workers--;
-
-            if (idle_workers == 0)
-            {
-                // Receieve results back from the workers!
+            if (results_received < piece_index) {
                 int move[4];
-                // [0] will be the piece index
-                // [1] and [2] will be the to_row and to_col
-                // [3] will be the score
-
-                MPI_Recv(move, 4, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                //printf("Master received move for piece at index %d\n", move[0]);
-                // Update piece_index with the best move found for that piece
-                piece_index[move[0]][2] = move[1];
-                piece_index[move[0]][3] = move[2];
-                piece_index[move[0]][4] = move[3];
-                idle_workers++;
+                printf("Master waiting for move from worker...\n");
+                MPI_Irecv(move, 4, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &recv_request);
+                MPI_Wait(&recv_request, &status);
+                printf("Master received move for piece %d\n", move[0]);
+                
+                if (move[3] > best_score) {
+                    best_score = move[3];
+                    best_from_row = move[1];
+                    best_from_col = move[2];
+                    best_to_row = move[1];
+                    best_to_col = move[2];
+                }
+                
+                results_received++;
             }
         }
-
-        printf("Master done waiting for workers\n");
-
-        printf("Rank(%d) get_best_move_parallel done\n", rank);
 
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Type_free(&pieceType);
+
+        *from_row = best_from_row;
+        *from_col = best_from_col;
+        *to_row = best_to_row;
+        *to_col = best_to_col;
+
         return 0;
-    }
-    else
-    {
-        printf("This should not be called by any process other than rank=0, calling rank is %d\n", rank);
+    } else {
         return 1;
     }
 }
 
-void parallel_worker()
-{
+
+void parallel_worker() {
     P_Colour current_player;
 
-    // Wait for a signal to do work...
-
     createPieceMPIType(&pieceType);
-
     int piece_size = sizeof(Piece);
 
-    while (1)
-    {
-        MPI_Recv(&signalBuf, 1, MPI_INT, 0, WORK_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    while (1) {
+        printf("Worker %d waiting for signal...\n", rank);
+        MPI_Irecv(&signalBuf, 1, MPI_INT, 0, WORK_TAG, MPI_COMM_WORLD, &req);
+        MPI_Wait(&req, MPI_STATUS_IGNORE);
 
-        if (signalBuf == work_signal)
-        {
+        if (signalBuf == work_signal) {
             printf("Worker %d working...\n", rank);
-
             task_count++;
 
-            // Receive the board from the master
             int board_size = X_BOARD_SIZE_X * X_BOARD_SIZE_Y;
-            int piece_size = sizeof(Piece);
-            int board_size_bytes = board_size * piece_size;
-
-            // printf("Worker %d waiting for board...\n", rank);
             MPI_Bcast(board, board_size, pieceType, 0, MPI_COMM_WORLD);
 
-            // printf("Worker %d received board\n", rank);
+            printf("Worker %d received board\n", rank);
 
-            // Now we need to play the game making up to MAX_DEPTH moves
-            while (1)
-            {
-                // Send idle signal to master
-                signalBuf = rank;
-                // printf("Worker %d sending idle signal\n", rank);
-                MPI_Send(&signalBuf, 1, MPI_INT, 0, IDLE_TAG, MPI_COMM_WORLD);
+            signalBuf = rank;
+            MPI_Isend(&signalBuf, 1, MPI_INT, 0, IDLE_TAG, MPI_COMM_WORLD, &req);
+            MPI_Wait(&req, MPI_STATUS_IGNORE);
+            printf("Worker %d sent idle signal\n", rank);
 
-                // Receive work to the worker
-                // printf("Worker %d waiting for piece...\n", rank);
+            while (1) {
                 int piece[4];
-                MPI_Recv(piece, 3, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                
+                MPI_Irecv(piece, 4, MPI_INT, 0, 0, MPI_COMM_WORLD, &req);
+                MPI_Wait(&req, MPI_STATUS_IGNORE);
+
                 int from_row = piece[1];
                 int from_col = piece[2];
                 current_player = piece[3];
-                
-                //printf("Worker: %d, Piece: %d %d %d\n", rank, piece[0], piece[1], piece[2]);
-                
-                // Okay, now using the board, and this information as the starting move... play the game for MAX_DEPTH moves
-                // and then evaluate the board to see how good the move was.
 
-                int moves_left_to_evaluate = MAX_DEPTH;
+                printf("Worker %d received piece (%d, %d)\n", rank, from_row, from_col);
 
-                int move[4];
-                // [0] will be the piece index
-                // [1] and [2] will be the to_row and to_col
-                // [3] will be the score
-
-                // Update piece_index with the best move found for that piece
-                move[0] = piece[0];
-                move[1] = -1;
-                move[2] = -1;
-                move[3] = -1;
-
-                for (int i = 0; i < X_BOARD_SIZE_X; i++)
-                {
-                    for (int j = 0; j < X_BOARD_SIZE_Y; j++)
-                    {
-                        // Don't try moving to our own position!
-                        if (i != from_row && j != from_col)
-                        {
-                            //printf("Worker %d evaluating pince as (%d, %d) -> (%d %d)\n", rank, from_row, from_col, i, j);
-
-                            if (is_valid_move(from_row, from_col, i, j, current_player))
-                            {
-                                //printf("Worker %d VALID MOVE %d %d %d %d\n", rank, from_row, from_col, i, j);
-
-                                // So, evaluate this move
-                                int score = evaluate_move(from_row, from_col, i, j, current_player, MAX_DEPTH);
-
-                                //printf("Worker %d score for move %d %d %d %d is %d\n", rank, from_row, from_col, i, j, score);
-
-                                // This is the only move we need to pass back to the master
-                                if (score > move[3])
-                                {
-                                    move[1] = i;
-                                    move[2] = j;
-                                    move[3] = score;
-                                }
+                int move[4] = { piece[0], -1, -1, -1 };
+                int best_score = INT_MIN;
+                for (int i = 0; i < X_BOARD_SIZE_X; i++) {
+                    for (int j = 0; j < X_BOARD_SIZE_Y; j++) {
+                        if (is_valid_move(from_row, from_col, i, j, current_player)) {
+                            int score = evaluate_move(from_row, from_col, i, j, current_player, MAX_DEPTH);
+                            if (score > best_score) {
+                                best_score = score;
+                                move[1] = i;
+                                move[2] = j;
+                                move[3] = score;
                             }
-
-                            //printf("NOT VALID - Worker %d done evaluating move %d %d %d %d\n", rank, from_row, from_col, i, j);
                         }
                     }
                 }
-                
-                //printf("Worker %d sending move for piece at index %d\n", rank, move[0]);
-                // Send the move back to the master
-                MPI_Send(move, 4, MPI_INT, 0, 0, MPI_COMM_WORLD);
-            }
-        }
 
-        if (signalBuf == terminate_signal)
-        {
+                printf("Worker %d sending move for piece %d\n", rank, piece[0]);
+                MPI_Isend(move, 4, MPI_INT, 0, 0, MPI_COMM_WORLD, &req);
+                MPI_Wait(&req, MPI_STATUS_IGNORE);
+                printf("Worker %d sent move for piece %d\n", rank, piece[0]);
+
+                MPI_Isend(&rank, 1, MPI_INT, 0, IDLE_TAG, MPI_COMM_WORLD, &req);
+                MPI_Wait(&req, MPI_STATUS_IGNORE);
+                printf("Worker %d sent idle signal again\n", rank);
+            }
+
+        } else if (signalBuf == terminate_signal) {
             printf("Process %d terminating... %d tasks completed.\n", rank, task_count);
             break;
         }
@@ -295,6 +230,9 @@ void parallel_worker()
 
     MPI_Type_free(&pieceType);
 }
+
+
+
 int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour player, int depth)
 {
     print_board();
@@ -314,24 +252,31 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
     if (is_valid_move(from_row, from_col, to_row, to_col, player))
     {
         // Make a copy of the game board
-        Piece * board_copy;
-        board_copy = malloc(X_BOARD_SIZE_X * X_BOARD_SIZE_Y * sizeof(Piece));
+        Piece *board_copy = malloc(X_BOARD_SIZE_X * X_BOARD_SIZE_Y * sizeof(Piece));
+        if (board_copy == NULL) {
+            fprintf(stderr, "Error: unable to allocate memory for board copy\n");
+            return score;
+        }
         memcpy(board_copy, board, X_BOARD_SIZE_X * X_BOARD_SIZE_Y * sizeof(Piece));
 
         // Make the move
         update_board(from_row, from_col, to_row, to_col, player);
 
-        for (int i = 0; i < X_BOARD_SIZE_X; i++)
-        {
-            for (int j = 0; j < X_BOARD_SIZE_Y; j++)
-            {
-                // Go one level deeper...
-                return evaluate_move(from_row, from_col, i, j, player, --depth);
+        // Go one level deeper...
+        for (int i = 0; i < X_BOARD_SIZE_X; i++) {
+            for (int j = 0; j < X_BOARD_SIZE_Y; j++) {
+                if (i != from_row || j != from_col) {
+                    int next_score = evaluate_move(to_row, to_col, i, j, player, depth - 1);
+                    if (next_score > score) {
+                        score = next_score;
+                    }
+                }
             }
         }
 
         // Undo the move
         memcpy(board, board_copy, X_BOARD_SIZE_X * X_BOARD_SIZE_Y * sizeof(Piece));
+        free(board_copy);
     }
 
     return score; 
