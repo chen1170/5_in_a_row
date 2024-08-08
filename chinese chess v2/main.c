@@ -16,6 +16,22 @@
 
 struct timeval tv;
 
+void run_performance_test(GameMode mode, int num_steps) {
+    double start_time, end_time;
+    init_game(mode);
+    start_time = MPI_Wtime();
+    for (int i = 0; i < num_steps; i++) {
+        run_game();
+        if (mode == PARALLEL_AI || mode == HUMAN_VS_PARALLEL_AI) {
+            cleanup_parallel_env();
+            init_parallel_env();
+        }
+    }
+
+    end_time = MPI_Wtime();
+    printf("Performance test for mode %d took %f seconds\n", mode, end_time - start_time);
+}
+
 int main(int argc, char *argv[])
 {
     gettimeofday(&tv, NULL);
@@ -30,6 +46,7 @@ int main(int argc, char *argv[])
     if (rank == 0) {
         // 主进程运行游戏逻辑
         GameMode mode = HUMAN_VS_AI;  // 默认模式
+        int num_steps = 10;  // 默认运行的游戏步骤数
 
         if (argc > 1) {
             if (strcmp(argv[1], "ai") == 0) {
@@ -38,6 +55,19 @@ int main(int argc, char *argv[])
                 mode = PARALLEL_AI;
             } else if (strcmp(argv[1], "human_parallel") == 0) {
                 mode = HUMAN_VS_PARALLEL_AI;
+            } else if (strcmp(argv[1], "test") == 0) {
+                if (argc > 2) {
+                    num_steps = atoi(argv[2]);
+                }
+                printf("Running performance tests...\n");
+                // printf("Testing non-parallel AI...\n");
+                run_performance_test(AI_VS_AI, num_steps);
+
+                printf("Testing parallel AI...\n");
+                run_performance_test(PARALLEL_AI, num_steps);
+
+                MPI_Finalize();
+                return 0;
             }
         }
 
