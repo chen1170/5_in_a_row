@@ -91,6 +91,7 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
         createPieceMPIType(&pieceType);
 
         MPI_Bcast(board, board_size, pieceType, 0, MPI_COMM_WORLD);
+        int MPI_Abort(MPI_Comm comm, int errorcode);
 
         // Alert workers to receive the board!
         for (int i = 1; i < size; i++)
@@ -103,49 +104,56 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
         }
 
         // How many pieces for this player on the board
-        int piece_count = 0;
-        for (int i = 0; i < BOARD_SIZE_X; i++)
+        int num_of_pieces_to_evaluate = 0;
+        for (int row = 0; row < BOARD_SIZE_X; row++)
         {
-            for (int j = 0; j < BOARD_SIZE_Y; j++)
+            for (int col = 0; col < BOARD_SIZE_Y; col++)
             {
-                if (get_piece(i, j).colour == current_player)
+                if (get_piece(row, col).colour == current_player)
                 {
-                    piece_count++;
+                    num_of_pieces_to_evaluate++;
                 }
             }
         }
 
-        int total_work = piece_count;
+        //int total_work = piece_count;
 
         // printf("Rank(%d) get_best_move_parallel\n", rank);
 
         // Index all of the pieces for this player.
-        int pieces_indexed = 0;
-        int piece_index[piece_count][5];
+        int current_piece_index = 0;
+        int piece_collection[num_of_pieces_to_evaluate][5];
         // [0] and [1] are the from_row and from_col
-        // [2] and [3] will be the to_row and to_col
+        // [2] and [3] will be the evaluated best move to_row and to_col
         // [4] will be the score (as projected after MAX_DEPTH moves down this path)
-        for (int i = 0; i < BOARD_SIZE_X; i++)
+        for (int row = 0; row < BOARD_SIZE_X; row++)
         {
-            for (int j = 0; j < BOARD_SIZE_Y; j++)
+            for (int col = 0; col < BOARD_SIZE_Y; col++)
             {
-                if (get_piece(i, j).colour == current_player)
+                if (get_piece(row, col).colour == current_player)
                 {
-                    piece_index[pieces_indexed][0] = i;
-                    piece_index[pieces_indexed][1] = j;
-                    piece_index[pieces_indexed][2] = -1;
-                    piece_index[pieces_indexed][3] = -1;
-                    piece_index[pieces_indexed][4] = -1;
-                    pieces_indexed++;
+                    piece_collection[current_piece_index][0] = row;
+                    piece_collection[current_piece_index][1] = col;
+                    piece_collection[current_piece_index][2] = -1;
+                    piece_collection[current_piece_index][3] = -1;
+                    piece_collection[current_piece_index][4] = -1;
+                    current_piece_index++;
                 }
             }
         }
 
-        // Set defaults for the
-        *from_row = piece_index[0][0];
-        *from_col = piece_index[0][1];
-        *to_row = piece_index[0][2];
-        *to_col = piece_index[0][3];
+        // Check if current_piece_index is correct
+        if (current_piece_index != num_of_pieces_to_evaluate)
+        {
+            // printf("Piece count mismatch.. ??\n");
+            return 1;
+        }
+
+        // Set defaults for the return pointers
+        *from_row = piece_collection[0][0];
+        *from_col = piece_collection[0][1];
+        *to_row = piece_collection[0][2];
+        *to_col = piece_collection[0][3];
 
         // printf("Rank(%d) piece_count: %d\n", rank, piece_count);
 
@@ -155,19 +163,23 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
         int work_started = 0;
         int work_completed = 0;
         // printf("Master waiting for workers to be ready...\n");
-        while (piece_index_count < pieces_indexed)
+        while (piece_index_count < current_piece_index)
         {
             // printf("Master best move: %d %d %d %d\n", *from_row, *from_col, *to_row, *to_col);
 
             MPI_Recv(&signalBuf, 1, MPI_INT, MPI_ANY_SOURCE, IDLE_TAG, MPI_COMM_WORLD, &status);
+            // check for errors using MPI
+
+
+
             int available_worker = status.MPI_SOURCE;
             // printf("Master received idle signal from worker %d\n", available_worker);
 
             // Send work to the worker
             int piece[4];
             piece[0] = piece_index_count;                 // The index of of the piece in the piece_index array
-            piece[1] = piece_index[piece_index_count][0]; // The row of the piece on the board
-            piece[2] = piece_index[piece_index_count][1]; // The col of the piece on the board
+            piece[1] = piece_collection[piece_index_count][0]; // The row of the piece on the board
+            piece[2] = piece_collection[piece_index_count][1]; // The col of the piece on the board
             piece[3] = current_player;                    // The number of pieces for this player on the board
 
             MPI_Send(&work_signal, 1, MPI_INT, available_worker, IDLE_TAG, MPI_COMM_WORLD);
@@ -190,22 +202,22 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
 
                 // printf("Master received move for piece at index %d\n", move[0]);
                 //  Update piece_index with the best move found for that piece
-                piece_index[move[0]][2] = move[1];
-                piece_index[move[0]][3] = move[2];
-                piece_index[move[0]][4] = move[3];
+                piece_collection[move[0]][2] = move[1];
+                piece_collection[move[0]][3] = move[2];
+                piece_collection[move[0]][4] = move[3];
 
                 // Update best score and move
                 int best_score = -1;
-                for (int i = 0; i < pieces_indexed; i++)
+                for (int i = 0; i < current_piece_index; i++)
                 {
-                    if (piece_index[i][4] > best_score)
+                    if (piece_collection[i][4] > best_score)
                     {
                         // printf("Master updating best move for piece at index %d\n", i);
-                        best_score = piece_index[i][4];
-                        *from_row = piece_index[i][0];
-                        *from_col = piece_index[i][1];
-                        *to_row = piece_index[i][2];
-                        *to_col = piece_index[i][3];
+                        best_score = piece_collection[i][4];
+                        *from_row = piece_collection[i][0];
+                        *from_col = piece_collection[i][1];
+                        *to_row = piece_collection[i][2];
+                        *to_col = piece_collection[i][3];
                     }
                 }
             }
