@@ -41,7 +41,7 @@ static int get_ai_move() {
         return 1;
     }
 
-    printf("AI move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+    //printf("AI move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
 
     update_board(from_row, from_col, to_row, to_col, current_player);
     return 0;    
@@ -62,10 +62,11 @@ static int get_parallel_ai_move() {
         printf("Parallel AI cannot find a valid move.\n");
         return p;
     }
-    if (current_player == BLACK)
-        printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
-    else
-        printf("Parallel AI WHITE move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+
+    //if (current_player == BLACK)
+        //printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+    //else
+        //printf("Parallel AI WHITE move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
 
     update_board(from_row, from_col, to_row, to_col, current_player);
 
