@@ -20,9 +20,11 @@ void run_performance_test(GameMode mode, int num_steps) {
     double start_time, end_time;
     
     start_time = MPI_Wtime();
-    for (int i = 0; i < num_steps; i++) {
+    for (int i = 0; i <= num_steps; i++) {
+        printf("Running game %d of %d\n", i, num_steps);
         init_game(mode);
         run_game(0);
+        printf("\n");
     }
     end_time = MPI_Wtime();
     printf("Performance test for mode %d took %f seconds\n", mode, end_time - start_time);
