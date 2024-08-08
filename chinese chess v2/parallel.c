@@ -50,6 +50,7 @@ void cleanup_parallel_env()
         printf("Sending term signal to p(%d)\n", i);        
         MPI_Isend(&terminate_signal, 1, MPI_INT, i, IDLE_TAG, MPI_COMM_WORLD, &req);
     }
+
 }
 
 void createPieceMPIType(MPI_Datatype *newtype)
@@ -251,7 +252,7 @@ void parallel_worker()
 
         if (signalBuf == terminate_signal)
         {
-            //printf("Process %d terminating... %d tasks completed.\n", rank, task_count);
+            printf("Process %d terminating... %d tasks completed.\n", rank, task_count);
             break;
         }
         // We are being asked to do something, lets examine the signalBuf
