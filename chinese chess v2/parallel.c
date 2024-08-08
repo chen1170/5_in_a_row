@@ -143,6 +143,12 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
             }
         }
 
+        // Set defaults for the 
+        *from_row = piece_index[0][0];
+        *from_col = piece_index[0][1];
+        *to_row = piece_index[0][2];
+        *to_col = piece_index[0][3];
+
         //printf("Rank(%d) piece_count: %d\n", rank, piece_count);
 
         // Now wait for workers to report they are available to work
@@ -153,6 +159,8 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
         //printf("Master waiting for workers to be ready...\n");
         while (piece_index_count < pieces_indexed)
         {
+            //printf("Master best move: %d %d %d %d\n", *from_row, *from_col, *to_row, *to_col);
+
             MPI_Recv(&signalBuf, 1, MPI_INT, MPI_ANY_SOURCE, IDLE_TAG, MPI_COMM_WORLD, &status);
             int available_worker = status.MPI_SOURCE;
             //printf("Master received idle signal from worker %d\n", available_worker);
@@ -203,6 +211,16 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
                     }
                 }
             }
+        }
+        
+        // print the int values of the best move
+        // printf("Master best move: %d %d %d %d\n", *from_row, *from_col, *to_row, *to_col);
+
+        // check that moves have been updated
+        if (*to_row == -1 || *to_col == -1)
+        {
+            //printf("Master best move not updated\n");
+            return 1;
         }
         
         MPI_Type_free(&pieceType);
@@ -298,29 +316,29 @@ void parallel_worker()
             move[2] = -1;
             move[3] = -1;
 
-            for (int i = 0; i < BOARD_SIZE_X; i++)
+            for (int to_row = 0; to_row < BOARD_SIZE_X; to_row++)
             {
-                for (int j = 0; j < BOARD_SIZE_Y; j++)
+                for (int to_col = 0; to_col < BOARD_SIZE_Y; to_col++)
                 {
                     // Don't try moving to our own position!
-                    if (i != from_row && j != from_col)
+                    if (to_row != from_row && to_col != from_col)
                     {
-                        //printf("Worker %d evaluating pince as (%d, %d) -> (%d %d)\n", rank, from_row, from_col, i, j);
+                        //printf("Worker %d evaluating pince as (%d, %d) -> (%d %d)\n", rank, from_row, from_col, to_row, to_col);
 
-                        if (is_valid_move(from_row, from_col, i, j, current_player))
+                        if (is_valid_move(from_row, from_col, to_row, to_col, current_player))
                         {
-                            //printf("Worker %d VALID MOVE %d %d %d %d\n", rank, from_row, from_col, i, j);
+                            //printf("Worker %d VALID MOVE %d %d %d %d\n", rank, from_row, from_col, to_row, to_col);
 
                             // So, evaluate this move
-                            int score = evaluate_move(from_row, from_col, i, j, current_player, MAX_DEPTH);
+                            int score = evaluate_move(from_row, from_col, to_row, to_col, current_player, MAX_DEPTH);
 
-                            //printf("Worker %d score for move %d %d %d %d is %d\n", rank, from_row, from_col, i, j, score);
+                            //printf("Worker %d score for move %d %d %d %d is %d\n", rank, from_row, from_col, to_row, to_col, score);
 
                             // This is the only move we need to pass back to the master
                             if (score > move[3])
                             {
-                                move[1] = i;
-                                move[2] = j;
+                                move[1] = to_row;
+                                move[2] = to_col;
                                 move[3] = score;
                             }
                         }
