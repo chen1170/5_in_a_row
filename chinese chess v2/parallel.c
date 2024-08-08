@@ -192,7 +192,15 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
             if (flag)
             {
                 int move[4];
+                move[0] = -2;
+                move[1] = -2;
+                move[2] = -2;
+                move[3] = -2;
                 MPI_Recv(move, 4, MPI_INT, MPI_ANY_SOURCE, WORK_TAG, MPI_COMM_WORLD, &status);
+
+                // check the values of move:
+                //printf("Master received move for piece at index %d: %d %d %d\n", move[0], move[1], move[2], move[3]);
+
 
                 // Receieve results back from the workers!
 
