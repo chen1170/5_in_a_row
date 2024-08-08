@@ -761,7 +761,15 @@ int is_valid_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
 
 void update_board(int from_row, int from_col, int to_row, int to_col, P_Colour player)
 {
-    //if (is_valid_move(from_row, from_col, to_row, to_col, player))
+    // printf("Updating board...\n");
+    // printf("From: %d %d\n", from_row, from_col);
+    // printf("To: %d %d\n", to_row, to_col);
+    // printf("Piece: %d\n", board[from_row][from_col].type);
+    // printf("Colour: %d\n", board[from_row][from_col].colour);
+    // printf("Destination: %d\n", board[to_row][to_col].type);
+    // printf("Destination colour: %d\n", board[to_row][to_col].colour);
+
+    if (is_valid_move(from_row, from_col, to_row, to_col, player))
     //{
         // Move the piece
         board[to_row][to_col] = board[from_row][from_col];
