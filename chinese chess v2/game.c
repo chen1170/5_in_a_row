@@ -10,7 +10,7 @@ static P_Colour current_player;
 
 void init_game(GameMode mode) {
     current_mode = mode;
-    current_player = BLACK;
+    current_player = RED;
     init_board();
     //if (mode == PARALLEL_AI || mode == HUMAN_VS_PARALLEL_AI) {
         //init_parallel_env();
@@ -19,7 +19,7 @@ void init_game(GameMode mode) {
 }
 
 static void switch_player() {
-    current_player = (current_player == BLACK) ? WHITE : BLACK;
+    current_player = (current_player == RED) ? BLACK : RED;
 }
 
 static int get_ai_move() {
@@ -63,10 +63,10 @@ static int get_parallel_ai_move() {
         return p;
     }
 
-    //if (current_player == BLACK)
-        //printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+    //if (current_player == RED)
+        //printf("Parallel AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
     //else
-        //printf("Parallel AI WHITE move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+        //printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
 
     update_board(from_row, from_col, to_row, to_col, current_player);
 
@@ -94,7 +94,7 @@ void run_game(int show_board) {
 
         switch (current_mode) {
             case HUMAN_VS_AI:
-                if (current_player == BLACK) {
+                if (current_player == RED) {
                     get_human_move();
                 } else {
                     draw = get_ai_move();
@@ -110,7 +110,7 @@ void run_game(int show_board) {
                 //printf("Parallel AI move: %c%d\n", 'a' + col, row + 1);
                 break;
             case HUMAN_VS_PARALLEL_AI:
-                if (current_player == BLACK) {
+                if (current_player == RED) {
                     get_human_move();
                 } else {
                     draw = get_parallel_ai_move();
@@ -131,9 +131,9 @@ void run_game(int show_board) {
         if (game_over) {
             print_board();
             if (game_over == 1)
-                printf("White wins!\n");
+                printf("BLACK wins!\n");
             else
-                printf("Black wins!\n");
+                printf("RED wins!\n");
         }
         else
         {

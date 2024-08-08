@@ -1,7 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
 
-// 游戏模式
 typedef enum {
     HUMAN_VS_AI,
     AI_VS_AI,
@@ -9,10 +8,8 @@ typedef enum {
     HUMAN_VS_PARALLEL_AI
 } GameMode;
 
-// 初始化游戏
 void init_game(GameMode mode);
 
-// 运行游戏主循环
 void run_game(int show_board);
 
 #endif // GAME_H

@@ -6,8 +6,8 @@
 
 typedef enum {
     EMPTY = 0,
-    BLACK = 1,
-    WHITE = 2,
+    RED = 1,
+    BLACK = 2,
     INVALID = 3
 } P_Colour;
 
@@ -51,6 +51,5 @@ void update_board(int from_row, int from_col, int to_row, int to_col, P_Colour p
 Piece get_piece(int row, int col);
 int check_win();
 int parse_move(const char* from, const char* to, P_Colour player);
-int is_board_full();
 
 #endif // BOARD_H

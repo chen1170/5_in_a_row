@@ -42,9 +42,8 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     if (rank == 0) {
-        // 主进程运行游戏逻辑
-        GameMode mode = HUMAN_VS_AI;  // 默认模式
-        int num_steps = 10;  // 默认运行的游戏步骤数
+        GameMode mode = HUMAN_VS_AI;  
+        int num_steps = 10;  
 
         if (argc > 1) {
             if (strcmp(argv[1], "ai") == 0) {
@@ -77,9 +76,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        // 工作进程等待并执行并行任务
         init_parallel_env();
-        parallel_worker();  // 初始玩家设为 BLACK，但在实际运行中会被正确的玩家替换
+        parallel_worker();  
     }
 
     MPI_Finalize();

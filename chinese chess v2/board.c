@@ -28,14 +28,14 @@ void init_board()
             empty.board_code = '.';
             board[row][col] = empty;
 
-            // Black pieces
+            // RED pieces
 
             // Chariots
             if (row == 0 && (col == 0 || col == 8))
             {
                 Piece ju;
                 ju.type = JU;
-                ju.colour = BLACK;
+                ju.colour = RED;
                 ju.code = R;
                 ju.board_code = 'R';
                 board[row][col] = ju;
@@ -46,7 +46,7 @@ void init_board()
             {
                 Piece ma;
                 ma.type = MA;
-                ma.colour = BLACK;
+                ma.colour = RED;
                 ma.code = H;
                 ma.board_code = 'H';
                 board[row][col] = ma;
@@ -57,7 +57,7 @@ void init_board()
             {
                 Piece xiang;
                 xiang.type = XIANG;
-                xiang.colour = BLACK;
+                xiang.colour = RED;
                 xiang.code = E;
                 xiang.board_code = 'E';
                 board[row][col] = xiang;
@@ -68,7 +68,7 @@ void init_board()
             {
                 Piece shi;
                 shi.type = SHI;
-                shi.colour = BLACK;
+                shi.colour = RED;
                 shi.code = A;
                 shi.board_code = 'A';
                 board[row][col] = shi;
@@ -79,7 +79,7 @@ void init_board()
             {
                 Piece jiang;
                 jiang.type = JIANG;
-                jiang.colour = BLACK;
+                jiang.colour = RED;
                 jiang.code = G;
                 jiang.board_code = 'G';
                 board[row][col] = jiang;
@@ -90,7 +90,7 @@ void init_board()
             {
                 Piece pao;
                 pao.type = PAO;
-                pao.colour = BLACK;
+                pao.colour = RED;
                 pao.code = C;
                 pao.board_code = 'C';
                 board[row][col] = pao;
@@ -101,20 +101,20 @@ void init_board()
             {
                 Piece bing;
                 bing.type = BING;
-                bing.colour = BLACK;
+                bing.colour = RED;
                 bing.code = S;
                 bing.board_code = 'S';
                 board[row][col] = bing;
             }
 
-            // White pieces
+            // BLACK pieces
 
             // Chariots
             if (row == 9 && (col == 0 || col == 8))
             {
                 Piece ju;
                 ju.type = JU;
-                ju.colour = WHITE;
+                ju.colour = BLACK;
                 ju.code = R;
                 ju.board_code = 'r';
                 board[row][col] = ju;
@@ -125,7 +125,7 @@ void init_board()
             {
                 Piece ma;
                 ma.type = MA;
-                ma.colour = WHITE;
+                ma.colour = BLACK;
                 ma.code = H;
                 ma.board_code = 'h';
                 board[row][col] = ma;
@@ -136,7 +136,7 @@ void init_board()
             {
                 Piece xiang;
                 xiang.type = XIANG;
-                xiang.colour = WHITE;
+                xiang.colour = BLACK;
                 xiang.code = E;
                 xiang.board_code = 'e';
                 board[row][col] = xiang;
@@ -147,7 +147,7 @@ void init_board()
             {
                 Piece shi;
                 shi.type = SHI;
-                shi.colour = WHITE;
+                shi.colour = BLACK;
                 shi.code = A;
                 shi.board_code = 'a';
                 board[row][col] = shi;
@@ -158,7 +158,7 @@ void init_board()
             {
                 Piece jiang;
                 jiang.type = JIANG;
-                jiang.colour = WHITE;
+                jiang.colour = BLACK;
                 jiang.code = G;
                 jiang.board_code = 'g';
                 board[row][col] = jiang;
@@ -169,7 +169,7 @@ void init_board()
             {
                 Piece pao;
                 pao.type = PAO;
-                pao.colour = WHITE;
+                pao.colour = BLACK;
                 pao.code = C;
                 pao.board_code = 'c';
                 board[row][col] = pao;
@@ -180,7 +180,7 @@ void init_board()
             {
                 Piece bing;
                 bing.type = BING;
-                bing.colour = WHITE;
+                bing.colour = BLACK;
                 bing.code = S;
                 bing.board_code = 's';
                 board[row][col] = bing;
@@ -209,245 +209,138 @@ void print_board()
 int is_valid_move_for_general(int from_row, int from_col, int to_row, int to_col)
 {
     // Generals must stay within the palace
-    // First, we check that the black general is staying within the palace
-    if (board[from_row][from_col].colour == WHITE)
+    // Check that the general stays within the palace boundaries
+    if ((board[from_row][from_col].colour == BLACK && (to_row < 7 || to_col < 3 || to_col > 5)) ||
+        (board[from_row][from_col].colour == RED && (to_row > 2 || to_col < 3 || to_col > 5)))
     {
-        if (to_row < 7 || to_col < 3 || to_col > 5)
-        {
-            return 0;
-        }
+        return 0; // General must stay within the palace for respective color
     }
 
-    // Next, we check that the white general is staying within the palace
-    if (board[from_row][from_col].colour == BLACK)
+    // Check that the general moves only one space and only vertically or horizontally
+    if (!((abs(to_row - from_row) == 1 && to_col == from_col) ||
+          (abs(to_col - from_col) == 1 && to_row == from_row)))
     {
-        if (to_row > 2 || to_col < 3 || to_col > 5)
-        {
-            return 0;
-        }
+        return 0; // Invalid move if the general tries to move diagonally or more than one space
     }
 
-    // Next, check that the general is only moving one space
-    if (board[from_row][from_col].type == JIANG)
-    {
-        if (abs(to_row - from_row) > 1 || abs(to_col - from_col) > 1)
-        {
-            return 0;
-        }
-    }
-
-    // Check to make sure there are no peices of the same color in the destination
+    // Check to make sure there are no pieces of the same color in the destination
     if (board[from_row][from_col].colour == board[to_row][to_col].colour)
     {
-        return 0;
+        return 0; // Cannot capture own pieces
     }
 
-    // Check to see if there is a piece of the opposite color in the destination
-    if (board[from_row][from_col].colour != board[to_row][to_col].colour)
-    {
-        // This is a capture!
-        return 1;
-    }
-
-    // If we get here, the move is valid
+    // If we get here, the move is valid if it's either a capture or to an empty spot
     return 1;
 }
 
 int is_valid_move_for_advisor(int from_row, int from_col, int to_row, int to_col)
 {
-    // Advisors must stay in the palac
-    // First check the black advisor
-    if (board[from_row][from_col].type == SHI)
+    if (board[from_row][from_col].type != SHI)
     {
-        if (to_row < 7 || to_col < 3 || to_col > 5)
-        {
-            return 0;
-        }
+        return 0; // Not an advisor
     }
 
-    // Next, check the white advisor
-    if (board[from_row][from_col].type == SHI)
+    // Advisors must stay in the palace
+    int palace_top = (board[from_row][from_col].colour == RED) ? 0 : 7;
+    int palace_bottom = (board[from_row][from_col].colour == RED) ? 2 : 9;
+    if (to_row < palace_top || to_row > palace_bottom || to_col < 3 || to_col > 5)
     {
-        if (to_row > 2 || to_col < 3 || to_col > 5)
-        {
-            return 0;
-        }
+        return 0; // Advisor must stay within the palace
     }
 
-    // Check to make sure the advisor is only moving diagonally
-    if (board[from_row][from_col].type == SHI)
+    // Check to make sure the advisor is only moving diagonally by one space
+    if (abs(to_row - from_row) != 1 || abs(to_col - from_col) != 1)
     {
-        if (abs(to_row - from_row) != 1 || abs(to_col - from_col) != 1)
-        {
-            return 0;
-        }
+        return 0; // Advisors move only one step diagonally
     }
 
-    // Check to make sure there are no peices of the same color in the destination
+    // Ensure the destination does not contain a piece of the same color
     if (board[from_row][from_col].colour == board[to_row][to_col].colour)
     {
-        return 0;
+        return 0; // Cannot move to a location with a piece of the same color
     }
 
-    // Check to see if there is a piece of the opposite color in the destination
-    if (board[from_row][from_col].colour != board[to_row][to_col].colour)
-    {
-        // This is a capture!
-        return 1;
-    }
-
-    // If we get here, the move is valid
+    // Valid move, could be capture or to an empty spot
     return 1;
 }
 
 int is_valid_move_for_elephant(int from_row, int from_col, int to_row, int to_col)
 {
+    if (board[from_row][from_col].type != XIANG)
+    {
+        printf("Not an elephant\n");
+        return 0; // Only apply rules to elephants
+    }
+
     // Elephants must stay within their own half of the board
-    // First check the black elephant
-    if (board[from_row][from_col].type == XIANG)
+    if ((board[from_row][from_col].colour == BLACK && to_row < 5) ||
+        (board[from_row][from_col].colour == RED && to_row > 4))
     {
-        if (to_row < 5)
-        {
-            return 0;
-        }
+        printf("Elephant must stay on their side of the board\n");
+        return 0; // Elephants must stay on their side of the river
     }
 
-    // Next, check the white elephant
-    if (board[from_row][from_col].type == XIANG)
+    // Ensure elephant is moving in an X shape exactly two steps away
+    if (abs(to_row - from_row) != 2 || abs(to_col - from_col) != 2)
     {
-        if (to_row > 4)
-        {
-            return 0;
-        }
+        printf("Not an X move\n");
+        return 0; // Not a valid "X" move
     }
 
-    // Check to make sure the elephant is moving in an X shape
-    if (board[from_row][from_col].type == XIANG)
+    // Check for blocking pieces at the crossing point ("elephant's eye")
+    int mid_row = (from_row + to_row) / 2;
+    int mid_col = (from_col + to_col) / 2;
+    if (board[mid_row][mid_col].type != None)
     {
-        if (abs(to_row - from_row) != 2 || abs(to_col - from_col) != 2)
-        {
-            return 0;
-        }
+        printf("Blocked by a piece at the elephant's eye\n");
+        return 0; // Blocked by a piece at the elephant's eye
     }
 
-    // Elephants can't jump over other pieces, check all four possible moves
-    if (board[from_row][from_col].type == XIANG)
-    {
-        // Check the top left move
-        if (to_row - from_row == 2 && to_col - from_col == 2)
-        {
-            if (board[from_row + 1][from_col + 1].type != None)
-            {
-                return 0;
-            }
-        }
-        // Check the top right move
-        if (to_row - from_row == 2 && to_col - from_col == -2)
-        {
-            if (board[from_row + 1][from_col - 1].type != None)
-            {
-                return 0;
-            }
-        }
-        // Check the bottom left move
-        if (to_row - from_row == -2 && to_col - from_col == 2)
-        {
-            if (board[from_row - 1][from_col + 1].type != None)
-            {
-                return 0;
-            }
-        }
-        // Check the bottom right move
-        if (to_row - from_row == -2 && to_col - from_col == -2)
-        {
-            if (board[from_row - 1][from_col - 1].type != None)
-            {
-                return 0;
-            }
-        }
-    }
-
-    // Check to make sure there are no peices of the same color in the destination
+    // Check to make sure there are no pieces of the same color in the destination
     if (board[from_row][from_col].colour == board[to_row][to_col].colour)
     {
-        return 0;
+        printf("Cannot capture own pieces\n");
+        return 0; // Cannot move to a location with a piece of the same color
     }
 
-    // Check to see if there is a piece of the opposite color in the destination
-    if (board[from_row][from_col].colour != board[to_row][to_col].colour)
-    {
-        // This is a capture!
-        return 1;
-    }
-
-    // If we get here, the move is valid
-    return 1;
+    // All checks passed, valid move
+    return 1; // This includes captures or moving to an empty spot
 }
 
 int is_valid_move_horse(int from_row, int from_col, int to_row, int to_col)
 {
-    // Horses can move in an L shape
-    // Check to make sure the horse is moving in an L shape
-    if (board[from_row][from_col].type == MA)
-    {
-        if (abs(to_row - from_row) == 2 && abs(to_col - from_col) == 1)
-        {
-            if (board[from_row + (to_row - from_row) / 2][from_col].type != None)
-            {
-                return 0;
-            }
-        }
-        else if (abs(to_row - from_row) == 1 && abs(to_col - from_col) == 2)
-        {
-            if (board[from_row][from_col + (to_col - from_col) / 2].type != None)
-            {
-                return 0;
-            }
-        }
-        else
-        {
-            // The horse is not moving in an L shape
-            return 0;
-        }
-    }
-
-    // Check that the horse is not blocked by a piece
-    if (board[from_row][from_col].type == MA)
-    {
-        // Moving vertically
-        if (abs(to_row - from_row) == 2)
-        {
-            int block_row = from_row + (to_row - from_row) / 2;
-            if (board[block_row][from_col].type != None)
-            {
-                return 0; // Blocked by a piece
-            }
-        }
-        // Moving horizontally
-        else if (abs(to_col - from_col) == 2)
-        {
-            int block_col = from_col + (to_col - from_col) / 2;
-            if (board[from_row][block_col].type != None)
-            {
-                return 0; // Blocked by a piece
-            }
-        }
-    }
-
-    // Check to make sure there are no peices of the same color in the destination
-    if (board[from_row][from_col].colour == board[to_row][to_col].colour)
+    // Check if the piece is a horse
+    if (board[from_row][from_col].type != MA)
     {
         return 0;
     }
 
-    // Check to see if there is a piece of the opposite color in the destination
-    if (board[from_row][from_col].colour != board[to_row][to_col].colour)
+    // Check the L-shape movement
+    if ((abs(to_row - from_row) == 2 && abs(to_col - from_col) == 1) ||
+        (abs(to_row - from_row) == 1 && abs(to_col - from_col) == 2))
     {
-        // This is a capture!
-        return 1;
+        // Calculate the position of the "leg" of the horse to check for blocking
+        int block_row = from_row + (to_row - from_row) / 2;
+        int block_col = from_col + (to_col - from_col) / 2;
+
+        // Check if the leg position is blocked
+        if (board[block_row][block_col].type != None)
+        {
+            return 0; // Move is blocked
+        }
+    }
+    else
+    {
+        return 0; // Not a valid L-shape move
     }
 
-    // If we get here, the move is valid
+    // Ensure destination does not contain a piece of the same color
+    if (board[from_row][from_col].colour == board[to_row][to_col].colour)
+    {
+        return 0; // Cannot move to a location with a piece of the same color
+    }
+
+    // Valid move if it's either a capture or moving to an empty spot
     return 1;
 }
 
@@ -593,77 +486,39 @@ int is_valid_move_for_cannon(int from_row, int from_col, int to_row, int to_col)
 
 int is_valid_move_for_soldier(int from_row, int from_col, int to_row, int to_col)
 {
-    // Soldiers can only move forward
-    // Check to make sure the soldier is moving forward
-    if (board[from_row][from_col].type == BING)
-    {
-        if (board[from_row][from_col].colour == BLACK)
-        {
-            if (to_row <= from_row)
-            {
-                return 0;
-            }
-        }
-        if (board[from_row][from_col].colour == WHITE)
-        {
-            if (to_row >= from_row)
-            {
-                return 0;
-            }
-        }        
-    }
-
-    // Soldiers can move horizontally once they cross the river
-    // Check to make sure the soldier is allowed to move horizontally if they are past the river
-    if (board[from_row][from_col].type == BING)
-    {
-        if (board[from_row][from_col].colour == BLACK)
-        {
-            if (to_row >= 5)
-            {
-                if (abs(to_col - from_col) > 1)
-                {
-                    return 0;
-                }
-            }
-        }
-        if (board[from_row][from_col].colour == WHITE)
-        {
-            if (to_row <= 4)
-            {
-                if (abs(to_col - from_col) > 1)
-                {
-                    return 0;
-                }
-            }
-        }
-    }
-
-    // Soldiers can only move one space
-    if (board[from_row][from_col].type == BING)
-    {
-        if (abs(to_row - from_row) > 1 || abs(to_col - from_col) > 1)
-        {
-            return 0;
-        }
-    }
-
-    // Check to make sure there are no peices of the same color in the destination
-    if (board[from_row][from_col].colour == board[to_row][to_col].colour)
+    // Check if the piece is a soldier
+    if (board[from_row][from_col].type != BING)
     {
         return 0;
     }
 
-    // Check to see if there is a piece of the opposite color in the destination
-    if (board[from_row][from_col].colour != board[to_row][to_col].colour)
+    int vertical_direction = board[from_row][from_col].colour == RED ? 1 : -1;
+
+    // Check if moving forward one step
+    if (to_row == from_row + vertical_direction && to_col == from_col)
     {
-        // This is a capture!
-        return 1;
+        return 1; // Valid forward move
     }
 
-    // If we get here, the move is valid
-    return 1;
+    // Check for horizontal move past the river
+    if ((board[from_row][from_col].colour == RED && from_row >= 5) ||
+        (board[from_row][from_col].colour == BLACK && from_row <= 4))
+    {
+        if (to_row == from_row && abs(to_col - from_col) == 1)
+        {
+            return 1; // Valid horizontal move past the river
+        }
+    }
+
+    // Check if the destination has a piece of the same color
+    if (board[to_row][to_col].colour == board[from_row][from_col].colour)
+    {
+        return 0; // Cannot capture own pieces
+    }
+
+    return 0; // All other moves are invalid
 }
+
 
 int is_valid_move(int from_row, int from_col, int to_row, int to_col, P_Colour player)
 {
@@ -791,8 +646,8 @@ int check_win()
 {
     // Check if the game is over
     // The game is over if one of the generals is captured
-    int black_general = 0;
-    int white_general = 0;
+    int RED_general = 0;
+    int BLACK_general = 0;
 
     for (int i = 0; i < BOARD_SIZE_X; i++)
     {
@@ -800,23 +655,23 @@ int check_win()
         {
             if (board[i][j].type == JIANG)
             {
+                if (board[i][j].colour == RED)
+                {
+                    RED_general = 1;
+                }
                 if (board[i][j].colour == BLACK)
                 {
-                    black_general = 1;
-                }
-                if (board[i][j].colour == WHITE)
-                {
-                    white_general = 1;
+                    BLACK_general = 1;
                 }
             }
         }
     }
 
-    if (black_general == 0)
+    if (RED_general == 0)
     {
         return 1;
     }
-    if (white_general == 0)
+    if (BLACK_general == 0)
     {
         return 2;
     }

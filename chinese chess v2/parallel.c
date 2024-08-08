@@ -10,8 +10,8 @@
 #include <string.h>
 
 #define MAX_DEPTH 24
-#define MAX_PLAYER BLACK
-#define MIN_PLAYER WHITE
+#define MAX_PLAYER RED
+#define MIN_PLAYER BLACK
 
 // static int evaluate_board();
 // static int is_game_over();
@@ -329,7 +329,7 @@ void parallel_worker()
                 //fprintf(stderr, "Error: from_col is out of valid range.\n");
                 errors_detected++;
             }
-            if (current_player != BLACK && current_player != WHITE)
+            if (current_player != RED && current_player != BLACK)
             {
                 //fprintf(stderr, "Error: Invalid current_player value.\n");
                 errors_detected++;
@@ -444,10 +444,10 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
                 for (int j = 0; j < BOARD_SIZE_Y; j++)
                 {
                     // Go one level deeper...
-                    if (player == BLACK)
-                        score = evaluate_move(from_row, from_col, i, j, WHITE, depth);
-                    else
+                    if (player == RED)
                         score = evaluate_move(from_row, from_col, i, j, BLACK, depth);
+                    else
+                        score = evaluate_move(from_row, from_col, i, j, RED, depth);
                 }
             }
 
@@ -471,7 +471,7 @@ static int evaluate_board(P_Colour player)
 
     // Had to come up with something, so I just count the piece values (loosely based on what I read online)
     int score = 0;
-    if (player == WHITE || player == BLACK) {
+    if (player == BLACK || player == RED) {
         for (int row = 0; row < BOARD_SIZE_X; row++)
         {
             for (int col = 0; col < BOARD_SIZE_Y; col++)
