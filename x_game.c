@@ -47,23 +47,17 @@ static int get_ai_move() {
 }
 
 static int get_parallel_ai_move() {
-    int * from_row;
-    int * from_col;
-    int * to_row;
-    int * to_col;
-    
-    Piece * board_pointer = board[0];
+    int from_row, from_col, to_row, to_col;
+    Piece (*board_pointer)[X_BOARD_SIZE_Y] = board;
     printf("Parallel AI move...\n");
-    int p = get_best_move_parallel(from_row, from_col, to_row, to_col, board_pointer, current_player);
+    int p = get_best_move_parallel(&from_row, &from_col, &to_row, &to_col, board_pointer, current_player);
     if (p) {
         printf("Parallel AI cannot find a valid move.\n");
         return p;
     }
 
-    printf("Parallel AI move: %c%d %c%d\n", 'a' + *from_row, *from_col + 1, 'a' + *to_row, *to_col + 1);
-
-    update_board(*from_row, *from_col, *to_row, *to_col, current_player);
-
+    printf("Parallel AI move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+    update_board(from_row, from_col, to_row, to_col, current_player);
     return 0;
 }
 
