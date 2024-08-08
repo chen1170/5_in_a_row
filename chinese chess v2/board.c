@@ -209,7 +209,7 @@ int is_valid_move_for_general(int from_row, int from_col, int to_row, int to_col
 {
     // Generals must stay within the palace
     // First, we check that the black general is staying within the palace
-    if (board[from_row][from_col].colour == BLACK)
+    if (board[from_row][from_col].colour == WHITE)
     {
         if (to_row < 7 || to_col < 3 || to_col > 5)
         {
@@ -218,7 +218,7 @@ int is_valid_move_for_general(int from_row, int from_col, int to_row, int to_col
     }
 
     // Next, we check that the white general is staying within the palace
-    if (board[from_row][from_col].colour == WHITE)
+    if (board[from_row][from_col].colour == BLACK)
     {
         if (to_row > 2 || to_col < 3 || to_col > 5)
         {
