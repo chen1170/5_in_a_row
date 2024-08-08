@@ -667,7 +667,7 @@ int is_valid_move_for_soldier(int from_row, int from_col, int to_row, int to_col
 int is_valid_move(int from_row, int from_col, int to_row, int to_col, P_Colour player)
 {
 
-    //printf("Validating move...\n");
+    // printf("Validating move...\n");
     // printf("Current player: %d\n", player);
 
     // printf("From: %d %d\n", from_row, from_col);
@@ -693,13 +693,13 @@ int is_valid_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
     }
 
     // Check if the move is within the board
-    if (from_row >= 0 || from_row < BOARD_SIZE_X || from_col >= 0 || from_col < BOARD_SIZE_Y)
+    if (from_row < 0 || from_row >= BOARD_SIZE_X || from_col < 0 || from_col >= BOARD_SIZE_Y)
     {
         //printf("You must move within the board\n");
         return 0;
     }
 
-    if (to_row >= 0 || to_row < BOARD_SIZE_X || to_col >= 0 || to_col < BOARD_SIZE_Y)
+    if (to_row < 0 || to_row >= BOARD_SIZE_X || to_col < 0 || to_col >= BOARD_SIZE_Y)
     {
         //printf("You must move within the board\n");
         return 0;

@@ -1,5 +1,5 @@
 #include <mpi.h>
-// #include <omp.h>
+#include <omp.h>
 // #include <limits.h>
 #include "parallel.h"
 #include "board.h"
