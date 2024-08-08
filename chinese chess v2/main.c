@@ -18,9 +18,10 @@ struct timeval tv;
 
 void run_performance_test(GameMode mode, int num_steps) {
     double start_time, end_time;
-    init_game(mode);
+    
     start_time = MPI_Wtime();
     for (int i = 0; i < num_steps; i++) {
+        init_game(mode);
         run_game();
     }
     end_time = MPI_Wtime();
