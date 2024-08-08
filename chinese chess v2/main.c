@@ -22,7 +22,7 @@ void run_performance_test(GameMode mode, int num_steps) {
     start_time = MPI_Wtime();
     for (int i = 0; i < num_steps; i++) {
         init_game(mode);
-        run_game();
+        run_game(0);
     }
     end_time = MPI_Wtime();
     printf("Performance test for mode %d took %f seconds\n", mode, end_time - start_time);
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
         }
 
         init_game(mode);
-        run_game();
+        run_game(1);
         //printf("Rank(0) Done...\n");
         cleanup_parallel_env();
     }

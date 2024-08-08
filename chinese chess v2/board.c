@@ -21,6 +21,7 @@ void init_board()
 
             // Init with an empty piece
             //Piece empty;
+            Piece empty;
             empty.type = None;
             empty.colour = EMPTY;
             empty.code = N;

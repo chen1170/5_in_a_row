@@ -83,12 +83,13 @@ static void get_human_move() {
     } while (!parse_move(move_from, move_to, current_player));    
 }
 
-void run_game() {
+void run_game(int show_board) {
     int game_over = 0;
     int draw = 0;
 
     while (!game_over) {
-        print_board();
+        if (show_board)
+            print_board();
 
         switch (current_mode) {
             case HUMAN_VS_AI:

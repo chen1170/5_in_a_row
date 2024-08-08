@@ -13,6 +13,6 @@ typedef enum {
 void init_game(GameMode mode);
 
 // 运行游戏主循环
-void run_game();
+void run_game(int show_board);
 
 #endif // GAME_H
