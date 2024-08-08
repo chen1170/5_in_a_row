@@ -1,11 +1,11 @@
-/* nondet.c */
-#include <stdio.h>
+// /* nondet.c */
+// #include <stdio.h>
 #include "stdlib.h"
 
 #include "sys/time.h"
-#include "time.h"
+// #include "time.h"
 
-#include "unistd.h"
+// #include "unistd.h"
 #include <string.h>
 
 #include <mpi.h>
@@ -42,9 +42,7 @@ int main(int argc, char *argv[])
         }
 
         init_game(mode);
-        //print_board();
         run_game();
-        //printf("Rank(0) Done...\n");
     }
     else
     {

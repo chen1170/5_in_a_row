@@ -1,8 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "board.h"
-
 // 游戏模式
 typedef enum {
     HUMAN_VS_AI,

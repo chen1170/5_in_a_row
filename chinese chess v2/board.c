@@ -3,19 +3,18 @@
 #include <string.h>
 #include <stdlib.h>
 
-//static Piece board[BOARD_SIZE_X][BOARD_SIZE_Y];
-//static Piece empty;
-
 Piece board[BOARD_SIZE_X][BOARD_SIZE_Y];
 Piece empty;
 
+//Piece board[BOARD_SIZE_X][BOARD_SIZE_Y];
+//Piece empty;
 
 // Setup a board for Chinese Chess
 void init_board()
 {
-    for (int i = 0; i < BOARD_SIZE_X; i++)
+    for (int row = 0; row < BOARD_SIZE_X; row++)
     {
-        for (int j = 0; j < BOARD_SIZE_Y; j++)
+        for (int col = 0; col < BOARD_SIZE_Y; col++)
         {
             // Place the correct pieces on the board for each i, j position
             // by creating a Piece struct and assigning it to the board
@@ -26,164 +25,164 @@ void init_board()
             empty.colour = EMPTY;
             empty.code = N;
             empty.board_code = '.';
-            board[i][j] = empty;
+            board[row][col] = empty;
 
             // Black pieces
 
             // Chariots
-            if (i == 0 && (j == 0 || j == 8))
+            if (row == 0 && (col == 0 || col == 8))
             {
                 Piece ju;
                 ju.type = JU;
                 ju.colour = BLACK;
                 ju.code = R;
                 ju.board_code = 'R';
-                board[i][j] = ju;
+                board[row][col] = ju;
             }
 
             // Horses
-            if (i == 0 && (j == 1 || j == 7))
+            if (row == 0 && (col == 1 || col == 7))
             {
                 Piece ma;
                 ma.type = MA;
                 ma.colour = BLACK;
                 ma.code = H;
                 ma.board_code = 'H';
-                board[i][j] = ma;
+                board[row][col] = ma;
             }
 
             // Elephants
-            if (i == 0 && (j == 2 || j == 6))
+            if (row == 0 && (col == 2 || col == 6))
             {
                 Piece xiang;
                 xiang.type = XIANG;
                 xiang.colour = BLACK;
                 xiang.code = E;
                 xiang.board_code = 'E';
-                board[i][j] = xiang;
+                board[row][col] = xiang;
             }
 
             // Advisors
-            if (i == 0 && (j == 3 || j == 5))
+            if (row == 0 && (col == 3 || col == 5))
             {
                 Piece shi;
                 shi.type = SHI;
                 shi.colour = BLACK;
                 shi.code = A;
                 shi.board_code = 'A';
-                board[i][j] = shi;
+                board[row][col] = shi;
             }
 
             // General
-            if (i == 0 && j == 4)
+            if (row == 0 && col == 4)
             {
                 Piece jiang;
                 jiang.type = JIANG;
                 jiang.colour = BLACK;
                 jiang.code = G;
                 jiang.board_code = 'G';
-                board[i][j] = jiang;
+                board[row][col] = jiang;
             }
 
             // Cannons
-            if (i == 2 && (j == 1 || j == 7))
+            if (row == 2 && (col == 1 || col == 7))
             {
                 Piece pao;
                 pao.type = PAO;
                 pao.colour = BLACK;
                 pao.code = C;
                 pao.board_code = 'C';
-                board[i][j] = pao;
+                board[row][col] = pao;
             }
 
             // Soldiers
-            if (i == 3 && (j % 2 == 0))
+            if (row == 3 && (col % 2 == 0))
             {
                 Piece bing;
                 bing.type = BING;
                 bing.colour = BLACK;
                 bing.code = S;
                 bing.board_code = 'S';
-                board[i][j] = bing;
+                board[row][col] = bing;
             }
 
             // White pieces
 
             // Chariots
-            if (i == 9 && (j == 0 || j == 8))
+            if (row == 9 && (col == 0 || col == 8))
             {
                 Piece ju;
                 ju.type = JU;
                 ju.colour = WHITE;
                 ju.code = R;
                 ju.board_code = 'r';
-                board[i][j] = ju;
+                board[row][col] = ju;
             }
 
             // Horses
-            if (i == 9 && (j == 1 || j == 7))
+            if (row == 9 && (col == 1 || col == 7))
             {
                 Piece ma;
                 ma.type = MA;
                 ma.colour = WHITE;
                 ma.code = H;
                 ma.board_code = 'h';
-                board[i][j] = ma;
+                board[row][col] = ma;
             }
 
             // Elephants
-            if (i == 9 && (j == 2 || j == 6))
+            if (row == 9 && (col == 2 || col == 6))
             {
                 Piece xiang;
                 xiang.type = XIANG;
                 xiang.colour = WHITE;
                 xiang.code = E;
                 xiang.board_code = 'e';
-                board[i][j] = xiang;
+                board[row][col] = xiang;
             }
 
             // Advisors
-            if (i == 9 && (j == 3 || j == 5))
+            if (row == 9 && (col == 3 || col == 5))
             {
                 Piece shi;
                 shi.type = SHI;
                 shi.colour = WHITE;
                 shi.code = A;
                 shi.board_code = 'a';
-                board[i][j] = shi;
+                board[row][col] = shi;
             }
 
             // General
-            if (i == 9 && j == 4)
+            if (row == 9 && col == 4)
             {
                 Piece jiang;
                 jiang.type = JIANG;
                 jiang.colour = WHITE;
                 jiang.code = G;
                 jiang.board_code = 'g';
-                board[i][j] = jiang;
+                board[row][col] = jiang;
             }
 
             // Cannons
-            if (i == 7 && (j == 1 || j == 7))
+            if (row == 7 && (col == 1 || col == 7))
             {
                 Piece pao;
                 pao.type = PAO;
                 pao.colour = WHITE;
                 pao.code = C;
                 pao.board_code = 'c';
-                board[i][j] = pao;
+                board[row][col] = pao;
             }
 
             // Soldiers
-            if (i == 6 && (j % 2 == 0))
+            if (row == 6 && (col % 2 == 0))
             {
                 Piece bing;
                 bing.type = BING;
                 bing.colour = WHITE;
                 bing.code = S;
                 bing.board_code = 's';
-                board[i][j] = bing;
+                board[row][col] = bing;
             }
         }
     }
@@ -193,12 +192,12 @@ void print_board()
 {
     printf("\n");
     printf("   1 2 3 4 5 6 7 8 9\n");
-    for (int i = 0; i < BOARD_SIZE_X; i++)
+    for (int row = 0; row < BOARD_SIZE_X; row++)
     {
-        printf("%2c ",'a' + i);
-        for (int j = 0; j < BOARD_SIZE_Y; j++)
+        printf("%2c ",'a' + row);
+        for (int col = 0; col < BOARD_SIZE_Y; col++)
         {
-            char piece = board[i][j].board_code;
+            char piece = board[row][col].board_code;
             printf("%c ", piece);
         }
         printf("\n");
@@ -210,7 +209,7 @@ int is_valid_move_for_general(int from_row, int from_col, int to_row, int to_col
 {
     // Generals must stay within the palace
     // First, we check that the black general is staying within the palace
-    if (board[from_row][from_col].type == JIANG)
+    if (board[from_row][from_col].colour == BLACK)
     {
         if (to_row < 7 || to_col < 3 || to_col > 5)
         {
@@ -219,7 +218,7 @@ int is_valid_move_for_general(int from_row, int from_col, int to_row, int to_col
     }
 
     // Next, we check that the white general is staying within the palace
-    if (board[from_row][from_col].type == JIANG)
+    if (board[from_row][from_col].colour == WHITE)
     {
         if (to_row > 2 || to_col < 3 || to_col > 5)
         {
@@ -694,13 +693,13 @@ int is_valid_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
     }
 
     // Check if the move is within the board
-    if (from_row < 0 || from_row >= BOARD_SIZE_X || from_col < 0 || from_col >= BOARD_SIZE_Y)
+    if (from_row >= 0 || from_row < BOARD_SIZE_X || from_col >= 0 || from_col < BOARD_SIZE_Y)
     {
         //printf("You must move within the board\n");
         return 0;
     }
 
-    if (to_row < 0 || to_row >= BOARD_SIZE_X || to_col < 0 || to_col >= BOARD_SIZE_Y)
+    if (to_row >= 0 || to_row < BOARD_SIZE_X || to_col >= 0 || to_col < BOARD_SIZE_Y)
     {
         //printf("You must move within the board\n");
         return 0;

@@ -5,3 +5,7 @@ go.sh
 .vscode/settings.json
 .vscode/tasks.json
 chinese chess v2/x_main.x
+chinese chess v2/.vscode/c_cpp_properties.json
+chinese chess v2/.vscode/launch.json
+chinese chess v2/.vscode/settings.json
+chinese chess v2/.vscode/tasks.json

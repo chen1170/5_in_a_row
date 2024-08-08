@@ -1,15 +1,15 @@
 #include <mpi.h>
-#include <omp.h>
-#include <limits.h>
+// #include <omp.h>
+// #include <limits.h>
 #include "parallel.h"
 #include "board.h"
-#include "game.h"
+//#include "game.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_DEPTH 20
+#define MAX_DEPTH 24
 #define MAX_PLAYER BLACK
 #define MIN_PLAYER WHITE
 
@@ -17,7 +17,6 @@
 // static int is_game_over();
 // static int count_consecutive(int row, int col, int dx, int dy, PieceType piece);
 // static int evaluate_position(int row, int col, PieceType piece);
-
 
 MPI_Request req;
 MPI_Datatype pieceType;
@@ -189,7 +188,7 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
                 piece_index[move[0]][4] = move[3];
 
                 // Update best score and move
-                int best_score = INT_MIN;
+                int best_score = -1;
                 for (int i = 0; i < pieces_indexed; i++)
                 {
                     if (piece_index[i][4] > best_score)
@@ -362,6 +361,12 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
             // Make a copy of the game board
             Piece * board_copy;
             board_copy = malloc(BOARD_SIZE_X * BOARD_SIZE_Y * sizeof(Piece));
+            if (board_copy == NULL)
+            {
+                printf("Failed to allocate memory for board_copy\n");
+                return -1;
+            }
+
             memcpy(board_copy, board, BOARD_SIZE_X * BOARD_SIZE_Y * sizeof(Piece));
 
             //printf(" -->Made copy\n");
