@@ -52,11 +52,6 @@ void cleanup_parallel_env()
         MPI_Isend(&terminate_signal, 1, MPI_INT, i, IDLE_TAG, MPI_COMM_WORLD, &req);
     }
 
-    // for (int i = 1; i < size; i++)
-    // {
-    //     MPI_Recv(&signalBuf, 1, MPI_INT, i, IDLE_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    //     printf("Received confirmation from p(%d)\n", i);
-    // }
 }
 
 void createPieceMPIType(MPI_Datatype *newtype)

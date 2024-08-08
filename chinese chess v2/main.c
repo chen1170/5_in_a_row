@@ -22,12 +22,7 @@ void run_performance_test(GameMode mode, int num_steps) {
     start_time = MPI_Wtime();
     for (int i = 0; i < num_steps; i++) {
         run_game();
-        if (mode == PARALLEL_AI || mode == HUMAN_VS_PARALLEL_AI) {
-            cleanup_parallel_env();
-            init_parallel_env();
-        }
     }
-
     end_time = MPI_Wtime();
     printf("Performance test for mode %d took %f seconds\n", mode, end_time - start_time);
 }
@@ -65,7 +60,8 @@ int main(int argc, char *argv[])
 
                 printf("Testing parallel AI...\n");
                 run_performance_test(PARALLEL_AI, num_steps);
-
+                
+                cleanup_parallel_env();
                 MPI_Finalize();
                 return 0;
             }
@@ -75,6 +71,7 @@ int main(int argc, char *argv[])
         //print_board();
         run_game();
         //printf("Rank(0) Done...\n");
+        cleanup_parallel_env();
     }
     else
     {

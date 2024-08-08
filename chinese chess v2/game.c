@@ -140,6 +140,6 @@ void run_game() {
     }
 
     //if (current_mode == PARALLEL_AI || current_mode == HUMAN_VS_PARALLEL_AI) {
-        cleanup_parallel_env();
+        // cleanup_parallel_env();
     //}
 }
