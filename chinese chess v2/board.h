@@ -4,6 +4,11 @@
 #define BOARD_SIZE_X 10
 #define BOARD_SIZE_Y 9
 
+#define MAX_MOVES_PER_GAME 1000
+#define MAX_DEPTH 24
+#define MAX_PLAYER RED
+#define MIN_PLAYER BLACK
+
 typedef enum {
     EMPTY = 0,
     RED = 1,
@@ -51,5 +56,7 @@ void update_board(int from_row, int from_col, int to_row, int to_col, P_Colour p
 Piece get_piece(int row, int col);
 int check_win();
 int parse_move(const char* from, const char* to, P_Colour player);
+int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour player, int depth);
+static int evaluate_board(P_Colour player);
 
 #endif // BOARD_H

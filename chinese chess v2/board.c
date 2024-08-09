@@ -268,7 +268,7 @@ int is_valid_move_for_elephant(int from_row, int from_col, int to_row, int to_co
 {
     if (board[from_row][from_col].type != XIANG)
     {
-        printf("Not an elephant\n");
+        //printf("Not an elephant\n");
         return 0; // Only apply rules to elephants
     }
 
@@ -276,14 +276,14 @@ int is_valid_move_for_elephant(int from_row, int from_col, int to_row, int to_co
     if ((board[from_row][from_col].colour == BLACK && to_row < 5) ||
         (board[from_row][from_col].colour == RED && to_row > 4))
     {
-        printf("Elephant must stay on their side of the board\n");
+        //printf("Elephant must stay on their side of the board\n");
         return 0; // Elephants must stay on their side of the river
     }
 
     // Ensure elephant is moving in an X shape exactly two steps away
     if (abs(to_row - from_row) != 2 || abs(to_col - from_col) != 2)
     {
-        printf("Not an X move\n");
+        //printf("Not an X move\n");
         return 0; // Not a valid "X" move
     }
 
@@ -292,14 +292,14 @@ int is_valid_move_for_elephant(int from_row, int from_col, int to_row, int to_co
     int mid_col = (from_col + to_col) / 2;
     if (board[mid_row][mid_col].type != None)
     {
-        printf("Blocked by a piece at the elephant's eye\n");
+        //printf("Blocked by a piece at the elephant's eye\n");
         return 0; // Blocked by a piece at the elephant's eye
     }
 
     // Check to make sure there are no pieces of the same color in the destination
     if (board[from_row][from_col].colour == board[to_row][to_col].colour)
     {
-        printf("Cannot capture own pieces\n");
+        //printf("Cannot capture own pieces\n");
         return 0; // Cannot move to a location with a piece of the same color
     }
 
@@ -721,4 +721,119 @@ Piece get_piece(int row, int col) {
         return board[row][col];
     }
     return empty;
+}
+
+int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour player, int depth)
+{
+    //printf(" -->Evaluating move (%d %d) =>  (%d %d), depth = %d\n", from_row, from_col, to_row, to_col, depth);
+
+    // We don't need to remember any of these moves, we just need to pass back the score so that the first move maps
+    // to the move tree with the best resulting score
+
+    if (depth == 0)
+    {
+        //printf(" -->Depth 0\n");
+        return evaluate_board(player);
+    }
+
+    else
+    {
+        --depth;
+        int score = 0;
+
+        if (is_valid_move(from_row, from_col, to_row, to_col, player))
+        {
+            //printf(" -->Valid move\n");
+            // Make a copy of the game board
+            Piece *board_copy;
+            board_copy = malloc(BOARD_SIZE_X * BOARD_SIZE_Y * sizeof(Piece));
+            if (board_copy == NULL)
+            {
+                printf("Failed to allocate memory for board_copy\n");
+                return -1;
+            }
+
+            memcpy(board_copy, board, BOARD_SIZE_X * BOARD_SIZE_Y * sizeof(Piece));
+
+            //printf(" -->Made copy\n");
+
+            // Make the move
+            update_board(from_row, from_col, to_row, to_col, player);
+
+            //printf(" -->Updated board\n");
+
+            for (int i = 0; i < BOARD_SIZE_X; i++)
+            {
+                for (int j = 0; j < BOARD_SIZE_Y; j++)
+                {
+                    // Go one level deeper...
+                    if (player == RED)
+                        score = evaluate_move(from_row, from_col, i, j, BLACK, depth);
+                    else
+                        score = evaluate_move(from_row, from_col, i, j, RED, depth);
+                }
+            }
+
+            // printf(" -->Done with depth\n");
+
+            // Undo the move
+            memcpy(board, board_copy, BOARD_SIZE_X * BOARD_SIZE_Y * sizeof(Piece));
+
+            free(board_copy);
+        }
+
+        return score;
+    }
+}
+
+static int evaluate_board(P_Colour player)
+{
+    //print_board();
+    // Print which player we are evaluating the board for:
+    //printf("Evaluating board for player %d\n", player);
+
+    // Had to come up with something, so I just count the piece values (loosely based on what I read online)
+    int score = 0;
+    if (player == BLACK || player == RED) {
+        for (int row = 0; row < BOARD_SIZE_X; row++)
+        {
+            for (int col = 0; col < BOARD_SIZE_Y; col++)
+            {
+                if (board[row][col].colour == player)
+                {
+                    switch (board[row][col].type)
+                    {
+                    case BING:
+                        score += 1;
+                        break; // 2 if passed the river... need code for that
+                    case SHI:
+                        score += 2;
+                        break;
+                    case XIANG:
+                        score += 3;
+                        break;
+                    case MA:
+                        score += 4;
+                        break;
+                    case PAO:
+                        score += 5;
+                        break;
+                    case JU:
+                        score += 10;
+                        break;
+                    case JIANG:
+                        score += 1000;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        printf("Invalid player\n");
+    }
+    return score;
 }
