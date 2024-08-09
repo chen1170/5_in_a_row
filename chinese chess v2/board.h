@@ -4,8 +4,8 @@
 #define BOARD_SIZE_X 10
 #define BOARD_SIZE_Y 9
 
-#define MAX_MOVES_PER_GAME 300
-#define MAX_DEPTH 8
+#define MAX_MOVES_PER_GAME 1000
+#define MAX_DEPTH 24
 #define MAX_PLAYER RED
 #define MIN_PLAYER BLACK
 

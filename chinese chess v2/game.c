@@ -247,7 +247,7 @@ static void get_human_move() {
         printf("Enter your move (e.g., e6 e8): \n");
         scanf("%s", move_from);
         scanf("%s", move_to);
-    } while (!parse_move(move_from, move_to, current_player));    
+    } while (!parse_move(move_from, move_to, current_player));
 }
 
 void run_game(int show_board, double *serial_time, double *parallel_time) {
@@ -306,8 +306,6 @@ void run_game(int show_board, double *serial_time, double *parallel_time) {
         }
 
         total_moves++;
-
-        //update_board(row, col, current_player);
 
         if (draw) {
             printf("Draw!\n");
