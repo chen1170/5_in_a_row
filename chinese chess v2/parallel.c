@@ -332,7 +332,7 @@ void parallel_worker()
                 int to_col = rand() % BOARD_SIZE_Y;
                 attempts++;
 
-                is_valid_move(from_row, from_col, to_row, to_col, current_player);
+                //is_valid_move(from_row, from_col, to_row, to_col, current_player);
 
             }
             while (attempts < MAX_SIMULATED_WORK);

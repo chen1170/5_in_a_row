@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
         double game_serial_time = 0.0, game_parallel_time = 0.0;  
 
         init_game(mode);
-        run_game(0, &game_serial_time, &game_parallel_time);
+        run_game(1, &game_serial_time, &game_parallel_time);
         //printf("Rank(0) Done...\n");
         cleanup_parallel_env();
     }

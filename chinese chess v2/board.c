@@ -637,7 +637,7 @@ void update_board(int from_row, int from_col, int to_row, int to_col, P_Colour p
         empty.colour = EMPTY;
         empty.code = N;
         empty.board_code = '.';
-            
+
         board[from_row][from_col]= empty;
     //}
 }
@@ -706,7 +706,7 @@ int parse_move(const char *from, const char *to, P_Colour player)
 
     //printf("From: %d %d\n", from_row, from_col);
     //printf("To: %d %d\n", to_row, to_col);
-    
+
     if (is_valid_move(from_row, from_col, to_row, to_col, player))
     {
         update_board(from_row, from_col, to_row, to_col, player);
@@ -749,7 +749,7 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
             board_copy = malloc(BOARD_SIZE_X * BOARD_SIZE_Y * sizeof(Piece));
             if (board_copy == NULL)
             {
-                printf("Failed to allocate memory for board_copy\n");
+                //printf("Failed to allocate memory for board_copy\n");
                 return -1;
             }
 
@@ -780,19 +780,25 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
             memcpy(board, board_copy, BOARD_SIZE_X * BOARD_SIZE_Y * sizeof(Piece));
 
             free(board_copy);
-        }
+            //printf("Score returned: %d\n", score);
+            return score;
 
-        return score;
+        }
+        //printf("Invalid move...\n");
+        return evaluate_board(player);
     }
 }
 
 static int evaluate_board(P_Colour player)
 {
+    //printf("Player: %d\n", player);
     //print_board();
     // Print which player we are evaluating the board for:
     //printf("Evaluating board for player %d\n", player);
 
     // Had to come up with something, so I just count the piece values (loosely based on what I read online)
+    int black_score = 0;
+    int red_score = 0;
     int score = 0;
     if (player == BLACK || player == RED) {
         for (int row = 0; row < BOARD_SIZE_X; row++)
@@ -804,29 +810,38 @@ static int evaluate_board(P_Colour player)
                     switch (board[row][col].type)
                     {
                     case BING:
-                        score += 1;
+                        score = 1;
                         break; // 2 if passed the river... need code for that
                     case SHI:
-                        score += 2;
+                        score = 2;
                         break;
                     case XIANG:
-                        score += 3;
+                        score = 3;
                         break;
                     case MA:
-                        score += 4;
+                        score = 4;
                         break;
                     case PAO:
-                        score += 5;
+                        score = 5;
                         break;
                     case JU:
-                        score += 10;
+                        score = 10;
                         break;
                     case JIANG:
-                        score += 1000;
+                        score = 1000;
                         break;
                     default:
                         break;
                     }
+                }
+
+                if (player == BLACK)
+                {
+                    black_score += score;
+                }
+                else
+                {
+                    red_score += score;
                 }
             }
         }
@@ -835,5 +850,26 @@ static int evaluate_board(P_Colour player)
     {
         printf("Invalid player\n");
     }
-    return score;
+
+    // Return the score differential - this calculates, not just the players
+    // score, but their advantage (or disadvantage) over the other player
+    // in terms of their score. This has the effect of favouring moves
+    // that provide not just a higer score than another move, but a larger
+    // advantage over the other player.
+
+    // Eg. If after a move, the score is 100 for Black and 90 for Red, the score
+    // Differential for Black would be 10. However, if another move provides a
+    // score of 95 for Black, but captures a higher value piece from Red so that
+    // Red's score is is 80, the score differential would be 15, and would favour
+    // this move, even though the actual score for Black is less.
+
+    //printf("Scores: Black: %d, Red: %d\n", black_score, red_score);
+    if (player == BLACK)
+    {
+        return black_score ; //- red_score;
+    }
+    else
+    {
+        return red_score ; //- black_score;
+    }
 }
