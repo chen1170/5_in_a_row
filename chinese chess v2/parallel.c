@@ -339,16 +339,9 @@ void parallel_worker()
 
             int moves_left_to_evaluate = MAX_DEPTH;
 
-            int move[4];
-            // [0] will be the piece index
-            // [1] and [2] will be the to_row and to_col
-            // [3] will be the score
-
-            // Update piece_index with the best move found for that piece
-            move[0] = piece[0];
-            move[1] = -1;
-            move[2] = -1;
-            move[3] = -1;
+            int best_to_row = -1;
+            int best_to_col = -1;
+            int best_score = -1;
 
             if (errors_detected == 0)
             {
@@ -362,7 +355,7 @@ void parallel_worker()
                             // printf("Worker %d evaluating pince as (%d, %d) -> (%d %d)\n", rank, from_row, from_col, to_row, to_col);
                             
                             if (is_valid_move(from_row, from_col, to_row, to_col, current_player)) {
-                                // printf("Worker %d VALID MOVE %d %d %d %d\n", rank, from_row, from_col, to_row, to_col);
+                                //printf("Worker %d VALID MOVE %d %d %d %d\n", rank, from_row, from_col, to_row, to_col);
                             
                                 // So, evaluate this move
                                 int score = evaluate_move(from_row, from_col, to_row, to_col, current_player, MAX_DEPTH);
@@ -376,10 +369,27 @@ void parallel_worker()
                                 // printf("Worker %d score for move %d %d %d %d is %d\n", rank, from_row, from_col, to_row, to_col, score);
                             
                                 // This is the only move we need to pass back to the master
-                                if (score > move[3]) {
-                                    move[1] = to_row;
-                                    move[2] = to_col;
-                                    move[3] = score;
+                                if (score > best_score) {
+                                    best_to_row = to_row;
+                                    best_to_col = to_col;
+                                    best_score = score;
+                                    //printf("New best score\n");
+                                }
+
+                                // If this move generates the same score as the current best
+                                // change to the new move 50% of the time.
+                                if (score == best_score) {
+                                    if (rand() % 3 == 0)
+                                    {
+                                        //printf("Took rand row\n");
+                                        best_to_row = to_row;
+                                        best_to_col = to_col;
+                                        best_score = score;
+                                    }
+                                    else
+                                    {
+                                        //printf("Did not take rand\n");
+                                    }
                                 }
                             }
 
@@ -391,6 +401,21 @@ void parallel_worker()
 
             // printf("Worker %d sending move for piece at index %d\n", rank, move[0]);
             //  Send the move back to the master
+
+            int * move = (int *)malloc(4 * sizeof(int));
+            //int move[4];
+            // [0] will be the piece index
+            // [1] and [2] will be the to_row and to_col
+            // [3] will be the score
+
+            // Update piece_index with the best move found for that piece
+            int p = piece[0];
+            //printf("Worker %d sending move for piece at index %d: %d %d %d\n", rank, p, best_to_row, best_to_col, best_score);
+            move[0] = p;
+            move[1] = best_to_row;
+            move[2] = best_to_col;
+            move[3] = best_score;
+            //printf("Worker %d sending move for piece at index %d: %d %d %d\n", rank, move[0], move[1], move[2], move[3]);
             MPI_Send(move, 4, MPI_INT, 0, WORK_TAG, MPI_COMM_WORLD);
         }
     }
