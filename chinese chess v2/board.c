@@ -268,7 +268,7 @@ int is_valid_move_for_elephant(int from_row, int from_col, int to_row, int to_co
 {
     if (board[from_row][from_col].type != XIANG)
     {
-        //printf("Not an elephant\n");
+        // printf("Not an elephant\n");
         return 0; // Only apply rules to elephants
     }
 
@@ -276,14 +276,14 @@ int is_valid_move_for_elephant(int from_row, int from_col, int to_row, int to_co
     if ((board[from_row][from_col].colour == BLACK && to_row < 5) ||
         (board[from_row][from_col].colour == RED && to_row > 4))
     {
-        //printf("Elephant must stay on their side of the board\n");
+        // printf("Elephant must stay on their side of the board\n");
         return 0; // Elephants must stay on their side of the river
     }
 
     // Ensure elephant is moving in an X shape exactly two steps away
     if (abs(to_row - from_row) != 2 || abs(to_col - from_col) != 2)
     {
-        //printf("Not an X move\n");
+        // printf("Not an X move\n");
         return 0; // Not a valid "X" move
     }
 
@@ -292,14 +292,14 @@ int is_valid_move_for_elephant(int from_row, int from_col, int to_row, int to_co
     int mid_col = (from_col + to_col) / 2;
     if (board[mid_row][mid_col].type != None)
     {
-        //printf("Blocked by a piece at the elephant's eye\n");
+        // printf("Blocked by a piece at the elephant's eye\n");
         return 0; // Blocked by a piece at the elephant's eye
     }
 
     // Check to make sure there are no pieces of the same color in the destination
     if (board[from_row][from_col].colour == board[to_row][to_col].colour)
     {
-        //printf("Cannot capture own pieces\n");
+        // printf("Cannot capture own pieces\n");
         return 0; // Cannot move to a location with a piece of the same color
     }
 

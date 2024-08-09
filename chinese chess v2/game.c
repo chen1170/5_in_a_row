@@ -3,6 +3,7 @@
 #include "parallel.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <mpi.h>
 #include <time.h>
 
 static GameMode current_mode;
@@ -249,7 +250,7 @@ static void get_human_move() {
     } while (!parse_move(move_from, move_to, current_player));    
 }
 
-void run_game(int show_board) {
+void run_game(int show_board, double *serial_time, double *parallel_time) {
     int game_over = 0;
     int draw = 0;
     int total_moves = 0;
@@ -258,29 +259,48 @@ void run_game(int show_board) {
         if (show_board)
             print_board();
 
+        double start_time, end_time;
+
         switch (current_mode) {
             case HUMAN_VS_AI:
                 if (current_player == RED) {
-                    get_human_move();
+                    start_time = MPI_Wtime();
+                    get_human_move();  // serial
+                    end_time = MPI_Wtime();
+                    *serial_time += (end_time - start_time);
                 } else {
-                    draw = get_ai_move();
-                    //printf("AI move: %c%d\n", 'a' + col, row + 1);
+                    start_time = MPI_Wtime();
+                    draw = get_ai_move();  // serial
+                    end_time = MPI_Wtime();
+                    *serial_time += (end_time - start_time);
                 }
                 break;
+
             case AI_VS_AI:
-                draw = get_ai_move();
-                //printf("AI move: %c%d\n", 'a' + col, row + 1);
+                start_time = MPI_Wtime();
+                draw = get_ai_move();  // serial
+                end_time = MPI_Wtime();
+                *serial_time += (end_time - start_time);
                 break;
+
             case PARALLEL_AI:
-                draw = get_parallel_ai_move();
-                //printf("Parallel AI move: %c%d\n", 'a' + col, row + 1);
+                start_time = MPI_Wtime();
+                draw = get_parallel_ai_move();  // parallel
+                end_time = MPI_Wtime();
+                *parallel_time += (end_time - start_time);
                 break;
+
             case HUMAN_VS_PARALLEL_AI:
                 if (current_player == RED) {
-                    get_human_move();
+                    start_time = MPI_Wtime();
+                    get_human_move();  // serial
+                    end_time = MPI_Wtime();
+                    *serial_time += (end_time - start_time);
                 } else {
-                    draw = get_parallel_ai_move();
-                    //printf("Parallel AI move: %c%d\n", 'a' + col, row + 1);
+                    start_time = MPI_Wtime();
+                    draw = get_parallel_ai_move();  // parallel
+                    end_time = MPI_Wtime();
+                    *parallel_time += (end_time - start_time);
                 }
                 break;
         }
@@ -307,15 +327,8 @@ void run_game(int show_board) {
                 printf("BLACK wins!\n");
             else
                 printf("RED wins!\n");
-        }
-        else
-        {
-            //printf("Switching players...\n");
+        } else {
             switch_player();
         }
     }
-
-    //if (current_mode == PARALLEL_AI || current_mode == HUMAN_VS_PARALLEL_AI) {
-        // cleanup_parallel_env();
-    //}
 }

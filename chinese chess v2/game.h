@@ -10,6 +10,6 @@ typedef enum {
 
 void init_game(GameMode mode);
 
-void run_game(int show_board);
+void run_game(int show_board, double *serial_time, double *parallel_time);
 
 #endif // GAME_H
