@@ -22,7 +22,7 @@ void run_performance_test(GameMode mode, int num_steps) {
     
     start_time = MPI_Wtime();
     for (int i = 0; i < num_steps; i++) {
-        printf("Running game %d of %d\n", i + 1, num_steps);
+        //printf("Running game %d of %d\n", i + 1, num_steps);
         
         // Runtime for init_game
         double init_start = MPI_Wtime();
@@ -51,14 +51,14 @@ void run_performance_test(GameMode mode, int num_steps) {
 
 int main(int argc, char *argv[])
 {
-    gettimeofday(&tv, NULL);
-    srand(tv.tv_usec);
-
     MPI_Init(&argc, &argv);
     
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    gettimeofday(&tv, NULL);
+    srand((rank + 1) * tv.tv_usec);
 
     if (rank == 0) {
         GameMode mode = HUMAN_VS_AI;  
