@@ -49,8 +49,6 @@ void run_performance_test(GameMode mode, int num_steps) {
     printf("\n");
 }
 
-
-
 int main(int argc, char *argv[])
 {
     gettimeofday(&tv, NULL);
