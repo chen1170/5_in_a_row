@@ -18,17 +18,38 @@ struct timeval tv;
 
 void run_performance_test(GameMode mode, int num_steps) {
     double start_time, end_time;
+    double serial_time = 0.0, parallel_time = 0.0;
     
     start_time = MPI_Wtime();
-    for (int i = 0; i <= num_steps; i++) {
-        printf("Running game %d of %d\n", i, num_steps);
+    for (int i = 0; i < num_steps; i++) {
+        printf("Running game %d of %d\n", i + 1, num_steps);
+        
+        // Runtime for init_game
+        double init_start = MPI_Wtime();
         init_game(mode);
-        run_game(0);
-        printf("\n");
+        double init_end = MPI_Wtime();
+        serial_time += (init_end - init_start);
+        
+        // Runtime for parallel part
+        double game_serial_time = 0.0, game_parallel_time = 0.0;
+        run_game(0, &game_serial_time, &game_parallel_time);
+        
+        serial_time += game_serial_time;
+        parallel_time += game_parallel_time;
+
     }
     end_time = MPI_Wtime();
-    printf("Performance test for mode %d took %f seconds\n", mode, end_time - start_time);
+
+    double total_time = end_time - start_time;
+    printf("\n");
+    printf("Performance test for mode %d took %f seconds\n", mode, total_time);
+    if (parallel_time > 0) {
+        printf("Total parallel time: %f seconds (%.2f%%)\n", parallel_time, (parallel_time / total_time) * 100);
+    }
+    printf("\n");
 }
+
+
 
 int main(int argc, char *argv[])
 {
@@ -69,8 +90,10 @@ int main(int argc, char *argv[])
             }
         }
 
+        double game_serial_time = 0.0, game_parallel_time = 0.0;  
+
         init_game(mode);
-        run_game(1);
+        run_game(0, &game_serial_time, &game_parallel_time);
         //printf("Rank(0) Done...\n");
         cleanup_parallel_env();
     }
