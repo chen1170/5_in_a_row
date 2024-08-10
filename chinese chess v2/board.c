@@ -249,19 +249,12 @@ int is_valid_move_for_advisor(int from_row, int from_col, int to_row, int to_col
     }
 
     // Check to make sure the advisor is only moving diagonally by one space
-    if (abs(to_row - from_row) != 1 || abs(to_col - from_col) != 1)
+    if (abs(to_row - from_row) == 1 && abs(to_col - from_col) == 1)
     {
-        return 0; // Advisors move only one step diagonally
+        return 1; // Advisors move only one step diagonally
     }
 
-    // Ensure the destination does not contain a piece of the same color
-    if (board[from_row][from_col].colour == board[to_row][to_col].colour)
-    {
-        return 0; // Cannot move to a location with a piece of the same color
-    }
-
-    // Valid move, could be capture or to an empty spot
-    return 1;
+    return 0;
 }
 
 int is_valid_move_for_elephant(int from_row, int from_col, int to_row, int to_col)
@@ -346,143 +339,114 @@ int is_valid_move_horse(int from_row, int from_col, int to_row, int to_col)
 
 int is_valid_move_for_chariot(int from_row, int from_col, int to_row, int to_col)
 {
-    // Chariots can move horizontally or vertically
-    // Check to make sure the chariot is moving in a straight line
-    if (board[from_row][from_col].type == JU)
+    // Check if the piece is a chariot and if it's moving in a straight line
+    if (board[from_row][from_col].type != JU || 
+        (from_row != to_row && from_col != to_col))
     {
-        if (from_row != to_row && from_col != to_col)
-        {
-            return 0;
-        }
+        return 0; // Not a chariot or not a straight line move
     }
 
-    // Charoits can't jump over other pieces
-    if (board[from_row][from_col].type == JU)
+    // Check for horizontal movement
+    if (from_row == to_row)
     {
-        // Moving horizontally
-        if (from_row == to_row)
+        int start = (from_col < to_col) ? from_col : to_col;
+        int end = (from_col < to_col) ? to_col : from_col;
+        for (int i = start + 1; i < end; i++)
         {
-            int start = (from_col < to_col) ? from_col : to_col;
-            int end = (from_col < to_col) ? to_col : from_col;
-            for (int i = start + 1; i < end; i++)
+            if (board[from_row][i].type != None)
             {
-                if (board[from_row][i].type != None)
-                {
-                    return 0;
-                }
+                return 0; // There is a piece in the way
             }
         }
-        // Moving vertically
-        if (from_col == to_col)
+    }
+    // Check for vertical movement
+    else if (from_col == to_col)
+    {
+        int start = (from_row < to_row) ? from_row : to_row;
+        int end = (from_row < to_row) ? to_row : from_row;
+        for (int i = start + 1; i < end; i++)
         {
-            int start = (from_row < to_row) ? from_row : to_row;
-            int end = (from_row < to_row) ? to_row : from_row;
-            for (int i = start + 1; i < end; i++)
+            if (board[i][from_col].type != None)
             {
-                if (board[i][from_col].type != None)
-                {
-                    return 0;
-                }
+                return 0; // There is a piece in the way
             }
         }
     }
 
-    // Check to make sure there are no peices of the same color in the destination
-    if (board[from_row][from_col].colour == board[to_row][to_col].colour)
+    // Check to ensure the destination is either empty or contains an opponent's piece
+    if (board[to_row][to_col].type == None || 
+        board[from_row][from_col].colour != board[to_row][to_col].colour)
     {
-        return 0;
+        return 1; // Valid move (either capturing or moving to an empty space)
     }
 
-    // Check to see if there is a piece of the opposite color in the destination
-    if (board[from_row][from_col].colour != board[to_row][to_col].colour)
-    {
-        // This is a capture!
-        return 1;
-    }
-
-    // If we get here, the move is valid
-    return 1;
+    // If we reach here, the move is invalid (trying to capture own piece)
+    return 0;
 }
+
 
 int is_valid_move_for_cannon(int from_row, int from_col, int to_row, int to_col)
 {
-    // Cannons can only move vertically or horizontally in straigt lines
-    // Check to make sure the cannon is moving in a straight line
-    if (board[from_row][from_col].type == PAO)
+    // Check if the piece is a cannon and if it's moving in a straight line
+    if (board[from_row][from_col].type != PAO || 
+        (from_row != to_row && from_col != to_col))
     {
-        // One of the coordinates must be the same!
-        if (from_row != to_row && from_col != to_col)
+        return 0; // Not a cannon or not a straight line move
+    }
+
+    int count = 0;
+
+    // Moving horizontally
+    if (from_row == to_row)
+    {
+        int start = (from_col < to_col) ? from_col : to_col;
+        int end = (from_col < to_col) ? to_col : from_col;
+        for (int i = start + 1; i < end; i++)
         {
-            return 0;
+            if (board[from_row][i].type != None)
+            {
+                count++;
+            }
+        }
+    }
+    // Moving vertically
+    else if (from_col == to_col)
+    {
+        int start = (from_row < to_row) ? from_row : to_row;
+        int end = (from_row < to_row) ? to_row : from_row;
+        for (int i = start + 1; i < end; i++)
+        {
+            if (board[i][from_col].type != None)
+            {
+                count++;
+            }
         }
     }
 
-    // Cannons can't jump over other pieces (unless they are taking a piece!)
-    // Let's see if there are any pieces in the way
-    if (board[from_row][from_col].type == PAO)
+    // Case 1: Non-capturing move (no pieces between the cannon and the destination)
+    if (count == 0)
     {
-        // Moving horizontally
-        int count = 0;
-        if (from_row == to_row)
+        // The destination must be empty for a non-capturing move
+        if (board[to_row][to_col].type == None)
         {
-            int start = (from_col < to_col) ? from_col : to_col;
-            int end = (from_col < to_col) ? to_col : from_col;
-            for (int i = start + 1; i < end; i++)
-            {
-                if (board[from_row][i].type != None)
-                {
-                    count++;
-                }
-            }
-            if (count > 1)
-            {
-                return 0;
-            }
+            return 1; // Valid non-capturing move
         }
-        // Moving vertically
-        if (from_col == to_col)
+    }
+    // Case 2: Capturing move (exactly one piece between the cannon and the destination)
+    else if (count == 1)
+    {
+        // The destination must have an opponent's piece for a capturing move
+        if (board[to_row][to_col].type != None && 
+            board[from_row][from_col].colour != board[to_row][to_col].colour)
         {
-            int start = (from_row < to_row) ? from_row : to_row;
-            int end = (from_row < to_row) ? to_row : from_row;
-            for (int i = start + 1; i < end; i++)
-            {
-                if (board[i][from_col].type != None)
-                {
-                    count++;
-                }
-            }
-            if (count > 1)
-            {
-                return 0;
-            }
-        }
-
-        // If the count is 1, let's see if there is a piece to capture at the destination
-        if (count == 1)
-        {
-            if (board[to_row][to_col].type == None)
-            {
-                return 0;
-            }
-            // Otherwise, see if the piece is of the opposite color
-            if (board[from_row][from_col].colour == board[to_row][to_col].colour)
-            {
-                return 0;
-            }
-            // This is a capture!
-            return 1;
+            return 1; // Valid capturing move
         }
     }
 
-    // If we get here, the destination has to be empty
-    if (board[to_row][to_col].type != None)
-    {
-        return 0;
-    }
-
-    // If we get here, the move is valid
-    return 1;
+    // Any other move is invalid
+    return 0;
 }
+
 
 int is_valid_move_for_soldier(int from_row, int from_col, int to_row, int to_col)
 {
@@ -492,32 +456,37 @@ int is_valid_move_for_soldier(int from_row, int from_col, int to_row, int to_col
         return 0;
     }
 
-    int vertical_direction = board[from_row][from_col].colour == RED ? 1 : -1;
-
-    // Check if not moving forward one step
-    if (to_row != from_row + vertical_direction || to_col != from_col)
-    {
-        return 0; // Invalid forward move
-    }
-
-    // Check for horizontal move past the river
-    if ((board[from_row][from_col].colour == RED && from_row >= 5) ||
-        (board[from_row][from_col].colour == BLACK && from_row <= 4))
-    {
-        if (to_row == from_row && abs(to_col - from_col) == 1)
-        {
-            return 0; // Invalid horizontal move past the river
-        }
-    }
-
     // Check if the destination has a piece of the same color
     if (board[to_row][to_col].colour == board[from_row][from_col].colour)
     {
         return 0; // Cannot capture own pieces
     }
 
-    return 1; // All other moves are invalid
+    // Red soldiers move down (row increases), black soldiers move up (row decreases)
+    int vertical_direction = board[from_row][from_col].colour == RED ? 1 : -1;
+
+    // Check if moving forward
+    if (to_row == from_row + vertical_direction && to_col == from_col)
+    {
+        return 1; // Valid forward move
+    }
+    else // If not a forward move, check for horizontal movement after crossing the river
+    {
+        // Check if the soldier has crossed the river for horizontal movement
+        if ((board[from_row][from_col].colour == RED && from_row >= 5) ||
+            (board[from_row][from_col].colour == BLACK && from_row <= 4))
+        {
+            if (to_row == from_row && abs(to_col - from_col) == 1)
+            {
+                return 1; // Valid horizontal move after crossing the river
+            }
+        }
+    }
+
+    // Any other moves are invalid
+    return 0;
 }
+
 
 
 int is_valid_move(int from_row, int from_col, int to_row, int to_col, P_Colour player)
@@ -546,6 +515,11 @@ int is_valid_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
     {
         //printf("You must move to a different position\n");
         return 0;
+    }
+
+    if (board[to_row][to_col].colour == board[from_row][from_col].colour)
+    {
+        return 0; // Cannot capture own pieces
     }
 
     // Check if the move is within the board
@@ -770,9 +744,9 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
                 {
                     // Go one level deeper...
                     if (player == RED)
-                        score = evaluate_move(from_row, from_col, i, j, BLACK, depth);
+                        score = evaluate_move(to_row, to_col, i, j, BLACK, depth);
                     else
-                        score = evaluate_move(from_row, from_col, i, j, RED, depth);
+                        score = evaluate_move(to_row, to_col, i, j, RED, depth);
                 }
             }
 
