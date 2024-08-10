@@ -70,15 +70,12 @@ int get_best_parallel(P_Colour current_player)
     {
         MPI_Request reqs[size - 1];
         MPI_Request reqs2[size - 1];
-        // printf("Parallel AI move... current player is %d\n", current_player);
+        printf("Parallel AI move... current player is %d\n", current_player);
         // Send the board to all processes...
         int piece_size = sizeof(Piece);
         int board_size = BOARD_SIZE_X * BOARD_SIZE_Y;
         int board_size_bytes = board_size * piece_size;
         createPieceMPIType(&pieceType);
-
-        MPI_Bcast(board, board_size, pieceType, 0, MPI_COMM_WORLD);
-        int MPI_Abort(MPI_Comm comm, int errorcode);
 
         // Alert workers to receive the board!
         for (int i = 1; i < size; i++)
@@ -89,6 +86,9 @@ int get_best_parallel(P_Colour current_player)
             MPI_Send(&board_signal, 1, MPI_INT, i, IDLE_TAG, MPI_COMM_WORLD);
             // printf("Master sent board to worker %d\n", i);
         }
+
+        MPI_Bcast(board, board_size, pieceType, 0, MPI_COMM_WORLD);
+        //int MPI_Abort(MPI_Comm comm, int errorcode);
 
         // How many pieces for this player on the board
         int num_of_pieces_to_evaluate = 0;
