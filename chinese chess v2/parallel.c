@@ -222,7 +222,7 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
                 
                 for (int i = 0; i < num_of_pieces_to_evaluate; i++)
                 {
-                    if (piece_collection[i][4] > piece_best_score
+                    if ((piece_collection[i][4] > piece_best_score && rand() % 100 < 80)
                     || (piece_collection[i][4] == piece_best_score && rand() % 2 == 0))
                     {
                         // printf("Master updating best move for piece at index %d\n", i);
@@ -232,7 +232,7 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
                         *to_row = piece_collection[i][2];
                         *to_col = piece_collection[i][3];
                     }
-                }
+                }                
             }
 
             free(piece);

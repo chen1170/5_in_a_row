@@ -245,8 +245,9 @@ static int get_ai_move()
     int piece_best_score = -1;
     for (int i = 0; i < num_of_pieces_to_evaluate; i++)
     {
+
         //printf("Best score is: %d\n", piece_collection[i][4]);
-        if (piece_collection[i][4] > piece_best_score
+        if ((piece_collection[i][4] > piece_best_score && rand() % 100 < 80)
         || (piece_collection[i][4] == piece_best_score && rand() % 2 == 0))
         {
             piece_best_score = piece_collection[i][4];
