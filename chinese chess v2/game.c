@@ -276,28 +276,29 @@ static int get_ai_move()
 
 static int get_parallel_ai_move()
 {
-    int from_row;
-    int from_col;
-    int to_row;
-    int to_col;
+    int from_row = 0;
+    int from_col = 0;
+    int to_row = 0;
+    int to_col = 0;
 
     // printf("Current player is %d\n", current_player);
 
     Piece *board_pointer = board[0];
     // printf("Parallel AI move...\n");
-    int p = get_best_move_parallel(&from_row, &from_col, &to_row, &to_col, board_pointer, current_player);
+    //int p = get_best_move_parallel(&from_row, &from_col, &to_row, &to_col, board_pointer, current_player);
+    int p = get_best_parallel(current_player);
     if (p)
     {
         printf("Parallel AI cannot find a valid move.\n");
         return p;
     }
 
-    if (current_player == RED)
-        printf("Parallel AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
-    else
-        printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+    // if (current_player == RED)
+    //     printf("Parallel AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+    // else
+    //     printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
 
-    update_board(from_row, from_col, to_row, to_col, current_player);
+    // update_board(from_row, from_col, to_row, to_col, current_player);
 
     return 0;
 }

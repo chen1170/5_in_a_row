@@ -494,10 +494,10 @@ int is_valid_move_for_soldier(int from_row, int from_col, int to_row, int to_col
 
     int vertical_direction = board[from_row][from_col].colour == RED ? 1 : -1;
 
-    // Check if moving forward one step
-    if (to_row == from_row + vertical_direction && to_col == from_col)
+    // Check if not moving forward one step
+    if (to_row != from_row + vertical_direction || to_col != from_col)
     {
-        return 1; // Valid forward move
+        return 0; // Invalid forward move
     }
 
     // Check for horizontal move past the river
@@ -506,7 +506,7 @@ int is_valid_move_for_soldier(int from_row, int from_col, int to_row, int to_col
     {
         if (to_row == from_row && abs(to_col - from_col) == 1)
         {
-            return 1; // Valid horizontal move past the river
+            return 0; // Invalid horizontal move past the river
         }
     }
 
@@ -626,8 +626,10 @@ void update_board(int from_row, int from_col, int to_row, int to_col, P_Colour p
     // printf("Destination colour: %d\n", board[to_row][to_col].colour);
 
     if (is_valid_move(from_row, from_col, to_row, to_col, player))
-    //{
+    {
         // Move the piece
+        printf("Moving piece: (%d, %d) to (%d, %d)\n", from_row, from_col, to_row, to_col);
+
         board[to_row][to_col] = board[from_row][from_col];
 
         // Clear the old position
@@ -638,8 +640,8 @@ void update_board(int from_row, int from_col, int to_row, int to_col, P_Colour p
         empty.code = N;
         empty.board_code = '.';
 
-        board[from_row][from_col]= empty;
-    //}
+        board[from_row][from_col] = empty;
+    }
 }
 
 int check_win()
@@ -758,7 +760,7 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
             //printf(" -->Made copy\n");
 
             // Make the move
-            update_board(from_row, from_col, to_row, to_col, player);
+            //update_board(from_row, from_col, to_row, to_col, player);
 
             //printf(" -->Updated board\n");
 

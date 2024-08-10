@@ -65,8 +65,10 @@ void createPieceMPIType(MPI_Datatype *newtype)
     MPI_Type_commit(newtype);
 }
 
-int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_col, Piece *board, P_Colour current_player)
+//int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_col, Piece *board, P_Colour current_player)
+int get_best_parallel(P_Colour current_player)
 {
+    int from_row, from_col, to_row, to_col;
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -106,6 +108,7 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
         {
             for (int col = 0; col < BOARD_SIZE_Y; col++)
             {
+                //printf("r=%d, c=%d, colour=%d\n", row, col, get_piece(row, col).type);
                 if (get_piece(row, col).colour == current_player)
                 {
                     num_of_pieces_to_evaluate++;
@@ -149,10 +152,10 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
         }
 
         // Set defaults for the return pointers
-        * from_row = piece_collection[0][0];
-        * from_col = piece_collection[0][1];
-        * to_row = piece_collection[0][2];
-        * to_col = piece_collection[0][3];
+        from_row = -1;
+        from_col = -1;
+        to_row = -1;
+        to_col = -1;
         int best_score = -1;
 
         // printf("Rank(%d) piece_count: %d\n", rank, piece_count);
@@ -193,13 +196,7 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
             if (flag)
             {
                 int * move = (int *)malloc(4 * sizeof(int));
-                move[0] = -2;
-                move[1] = -2;
-                move[2] = -2;
-                move[3] = -2;
                 MPI_Recv(move, 4, MPI_INT, MPI_ANY_SOURCE, WORK_TAG, MPI_COMM_WORLD, &status);
-
-                
 
                 // check the values of move:
                 //printf("Master received move for piece at index %d: %d %d %d\n", move[0], move[1], move[2], move[3]);
@@ -228,10 +225,10 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
                     {
                         // printf("Master updating best move for piece at index %d\n", i);
                         piece_best_score = piece_collection[i][4];
-                        *from_row = piece_collection[i][0];
-                        *from_col = piece_collection[i][1];
-                        *to_row = piece_collection[i][2];
-                        *to_col = piece_collection[i][3];
+                        from_row = piece_collection[i][0];
+                        from_col = piece_collection[i][1];
+                        to_row = piece_collection[i][2];
+                        to_col = piece_collection[i][3];
                     }
                 }                
             }
@@ -242,7 +239,7 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
         // print the int values of the best move
         // printf("Master best move: %d %d %d %d\n", *from_row, *from_col, *to_row, *to_col);
 
-        if (piece_best_score == -1 || *to_row == -1 || *to_col == -1)
+        if (piece_best_score == -1 || to_row == -1 || to_col == -1)
         {
             printf("AI cannot find a valid move.\n");
             return 1;
@@ -254,7 +251,18 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
         free(piece_collection);
 
         MPI_Type_free(&pieceType);
+
+
+        if (current_player == RED)
+            printf("Parallel AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+        else
+            printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+
+        update_board(from_row, from_col, to_row, to_col, current_player);
+
         return 0;
+
+        // 
     }
     else
     {
@@ -353,6 +361,8 @@ void parallel_worker()
             from_col = piece[2];
             current_player = piece[3];
 
+            free(piece);
+
             // Check for errors in the piece array
             int errors_detected = 0;
 
@@ -448,10 +458,8 @@ void parallel_worker()
             // [1] and [2] will be the to_row and to_col
             // [3] will be the score
 
-            // Update piece_index with the best move found for that piece
-            int p = piece[0];
             //printf("Worker %d sending move for piece at index %d: %d %d %d\n", rank, p, best_to_row, best_to_col, best_score);
-            move[0] = piece[0];
+            move[0] = piece_index;
             move[1] = best_to_row;
             move[2] = best_to_col;
             move[3] = best_score;
@@ -459,7 +467,6 @@ void parallel_worker()
             MPI_Send(move, 4, MPI_INT, 0, WORK_TAG, MPI_COMM_WORLD);
 
             free(move);
-            free(piece);
         }
     }
 
