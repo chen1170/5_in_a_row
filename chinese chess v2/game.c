@@ -191,18 +191,18 @@ static int get_ai_move()
                 // Don't try moving to our own position!
                 if (to_row != from_row && to_col != from_col)
                 {
-                    if (is_valid_move(from_row, from_col, to_row, to_col, current_player))
-                    {
+                    //if (is_valid_move(from_row, from_col, to_row, to_col, current_player))
+                    //{
                         //printf("Valid move!!!\n");
                         // So, evaluate this move
                         int score = evaluate_move(from_row, from_col, to_row, to_col, current_player, MAX_DEPTH);
                         //printf("Eval score %d, move[3] %d\n", score, best_score);
                         // Check if evaluate_move returned a valid score
-                        if (score == -1)
-                        {
-                            fprintf(stderr, "Error: Failed to evaluate move.\n");
-                            return 1;
-                        }
+                        //if (score == -1)
+                        //{
+                            //fprintf(stderr, "Error: Failed to evaluate move.\n");
+                            //return 1;
+                        //}
 
                         // This is the only move we need to pass back to the master
                         if (score > best_score)
@@ -227,7 +227,7 @@ static int get_ai_move()
                                 // printf("did not take rand\n");
                             }
                         }
-                    }
+                    //}
                 }
             }
         }

@@ -714,7 +714,6 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
 
     else
     {
-        --depth;
         int score = 0;
 
         if (is_valid_move(from_row, from_col, to_row, to_col, player))
@@ -725,7 +724,7 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
             board_copy = malloc(BOARD_SIZE_X * BOARD_SIZE_Y * sizeof(Piece));
             if (board_copy == NULL)
             {
-                //printf("Failed to allocate memory for board_copy\n");
+                printf("Failed to allocate memory for board_copy\n");
                 return -1;
             }
 
@@ -734,19 +733,27 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
             //printf(" -->Made copy\n");
 
             // Make the move
-            //update_board(from_row, from_col, to_row, to_col, player);
+            update_board(from_row, from_col, to_row, to_col, player);
 
             //printf(" -->Updated board\n");
 
-            for (int i = 0; i < BOARD_SIZE_X; i++)
+            // Next player
+            P_Colour next_player = (player == RED) ? BLACK : RED;
+
+            for (int this_piece_row = 0; this_piece_row < BOARD_SIZE_X; this_piece_row++)
             {
-                for (int j = 0; j < BOARD_SIZE_Y; j++)
+                for (int this_piece_col = 0; this_piece_col < BOARD_SIZE_Y; this_piece_col++)
                 {
-                    // Go one level deeper...
-                    if (player == RED)
-                        score = evaluate_move(to_row, to_col, i, j, BLACK, depth);
-                    else
-                        score = evaluate_move(to_row, to_col, i, j, RED, depth);
+                    if (board[this_piece_row][this_piece_col].colour == next_player)
+                    {
+                        for (int this_piece_to_row = 0; this_piece_to_row < BOARD_SIZE_X; this_piece_to_row++)
+                        {
+                            for (int this_piece_to_col = 0; this_piece_to_col < BOARD_SIZE_Y; this_piece_to_col++)
+                            {
+                                    score = evaluate_move(this_piece_row, this_piece_col, this_piece_to_row, this_piece_to_col, next_player, depth-1);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -760,7 +767,7 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
             return score;
 
         }
-        //printf("Invalid move...\n");
+        // printf("Invalid move... Depth = %d\n", depth);
         return evaluate_board(player);
     }
 }
