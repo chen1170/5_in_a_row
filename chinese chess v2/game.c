@@ -191,8 +191,8 @@ static int get_ai_move()
                 // Don't try moving to our own position!
                 if (to_row != from_row && to_col != from_col)
                 {
-                    //if (is_valid_move(from_row, from_col, to_row, to_col, current_player))
-                    //{
+                    if (is_valid_move(from_row, from_col, to_row, to_col, current_player))
+                    {
                         //printf("Valid move!!!\n");
                         // So, evaluate this move
                         int score = evaluate_move(from_row, from_col, to_row, to_col, current_player, MAX_DEPTH);
@@ -227,7 +227,7 @@ static int get_ai_move()
                                 // printf("did not take rand\n");
                             }
                         }
-                    //}
+                    }
                 }
             }
         }
@@ -266,7 +266,12 @@ static int get_ai_move()
 
     else
     {
-        printf("AI move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+        // display player color:
+        if (current_player == RED)
+            printf("AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+        else
+            printf("AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+        //printf("AI move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
 
         update_board(from_row, from_col, to_row, to_col, current_player);
         
