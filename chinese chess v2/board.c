@@ -802,7 +802,7 @@ static int evaluate_board(P_Colour player)
     int black_score = 0;
     int red_score = 0;
     int score = 0;
-    if (player == BLACK || player == RED) {
+    if (player == RED) {
         for (int row = 0; row < BOARD_SIZE_X; row++)
         {
             for (int col = 0; col < BOARD_SIZE_Y; col++)
@@ -813,24 +813,31 @@ static int evaluate_board(P_Colour player)
                     {
                     case BING:
                         score = 1;
-                        break; // 2 if passed the river... need code for that
+                        score += bing_value[row][col];
+                        break;
                     case SHI:
                         score = 2;
+                        score += shi_value[row][col];
                         break;
                     case XIANG:
                         score = 3;
+                        score += xiang_value[row][col];
                         break;
                     case MA:
                         score = 4;
+                        score += ma_value[row][col];
                         break;
                     case PAO:
                         score = 5;
+                        score += pao_value[row][col];
                         break;
                     case JU:
                         score = 10;
+                        score += ju_value[row][col];
                         break;
                     case JIANG:
                         score = 1000;
+                        score += jiang_value[row][col];
                         break;
                     default:
                         break;
@@ -847,7 +854,51 @@ static int evaluate_board(P_Colour player)
                 }
             }
         }
+    }else if (player == BLACK){
+        for (int row = 0; row < BOARD_SIZE_X; row++)
+        {
+            for (int col = 0; col < BOARD_SIZE_Y; col++)
+            {
+                if (board[row][col].colour == player)
+                {
+                    switch (board[row][col].type)
+                    {
+                    case BING:
+                        score = 1;
+                        score += bing_value_black[row][col];
+                        break;
+                    case SHI:
+                        score = 2;
+                        score += shi_value_black[row][col];
+                        break;
+                    case XIANG:
+                        score = 3;
+                        score += xiang_value_black[row][col];
+                        break;
+                    case MA:
+                        score = 4;
+                        score += ma_value_black[row][col];
+                        break;
+                    case PAO:
+                        score = 5;
+                        score += pao_value_black[row][col];
+                        break;
+                    case JU:
+                        score = 10;
+                        score += ju_value_black[row][col];
+                        break;
+                    case JIANG:
+                        score = 1000;
+                        score += jiang_value_black[row][col];
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+        }
     }
+    
     else
     {
         printf("Invalid player\n");
