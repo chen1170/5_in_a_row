@@ -516,7 +516,7 @@ int is_valid_move_for_soldier(int from_row, int from_col, int to_row, int to_col
         return 0; // Cannot capture own pieces
     }
 
-    return 0; // All other moves are invalid
+    return 1; // All other moves are invalid
 }
 
 
@@ -628,7 +628,7 @@ void update_board(int from_row, int from_col, int to_row, int to_col, P_Colour p
     if (is_valid_move(from_row, from_col, to_row, to_col, player))
     {
         // Move the piece
-        printf("Moving piece: (%d, %d) to (%d, %d)\n", from_row, from_col, to_row, to_col);
+        //printf("Moving piece: (%d, %d) to (%d, %d)\n", from_row, from_col, to_row, to_col);
 
         board[to_row][to_col] = board[from_row][from_col];
 
