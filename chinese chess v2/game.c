@@ -258,7 +258,7 @@ static int get_ai_move()
         }
     }
 
-    if (piece_best_score == -1 || best_to_row == -1 || best_to_col == -1)
+    if (piece_best_score == -1 || to_row == -1 || to_col == -1)
     {
         printf("AI cannot find a valid move.\n");
         return 1;

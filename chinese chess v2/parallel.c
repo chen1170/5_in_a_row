@@ -121,6 +121,7 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
         for (int i = 0; i < num_of_pieces_to_evaluate; i++) {
             piece_collection[i] = (int *)malloc(5 * sizeof(int));
         }
+
         // [0] and [1] are the from_row and from_col
         // [2] and [3] will be the evaluated best move to_row and to_col
         // [4] will be the score (as projected after MAX_DEPTH moves down this path)
@@ -241,11 +242,11 @@ int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_co
         // print the int values of the best move
         // printf("Master best move: %d %d %d %d\n", *from_row, *from_col, *to_row, *to_col);
 
-        if (piece_best_score == -1)
-    {
-        printf("AI cannot find a valid move.\n");
-        return 1;
-    }
+        if (piece_best_score == -1 || *to_row == -1 || *to_col == -1)
+        {
+            printf("AI cannot find a valid move.\n");
+            return 1;
+        }
 
         for (int i = 0; i < num_of_pieces_to_evaluate; i++) {
             free(piece_collection[i]);
@@ -286,7 +287,7 @@ void parallel_worker()
 
     task_count = 0;
 
-    //int from_row, from_col, to_row, to_col;
+    int from_row, from_col, to_row, to_col;
 
 
     while (1)
@@ -327,10 +328,10 @@ void parallel_worker()
             // moves for each piece.
             int attempts = 0;
             do {
-                int from_row = rand() % BOARD_SIZE_X;
-                int from_col = rand() % BOARD_SIZE_Y;
-                int to_row = rand() % BOARD_SIZE_X;
-                int to_col = rand() % BOARD_SIZE_Y;
+                from_row = rand() % BOARD_SIZE_X;
+                from_col = rand() % BOARD_SIZE_Y;
+                to_row = rand() % BOARD_SIZE_X;
+                to_col = rand() % BOARD_SIZE_Y;
                 attempts++;
 
                 //is_valid_move(from_row, from_col, to_row, to_col, current_player);
@@ -348,8 +349,8 @@ void parallel_worker()
             MPI_Recv(piece, 4, MPI_INT, 0, WORK_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             
             int piece_index = piece[0];
-            int from_row = piece[1];
-            int from_col = piece[2];
+            from_row = piece[1];
+            from_col = piece[2];
             current_player = piece[3];
 
             // Check for errors in the piece array
