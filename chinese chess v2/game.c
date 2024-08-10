@@ -54,7 +54,6 @@ static int get_ai_move_original()
 
 static int get_ai_move()
 {
-
     int from_row, from_col, to_row, to_col;
 
     // How many pieces for this player on the board
@@ -88,6 +87,9 @@ static int get_ai_move()
                 piece_collection[current_piece_index][3] = -1;
                 piece_collection[current_piece_index][4] = -1;
                 current_piece_index++;
+
+                // Print out the pieces for this player
+                //printf("Piece %d: %d %d\n", current_piece_index, row, col);
             }
         }
     }
@@ -95,7 +97,7 @@ static int get_ai_move()
     // Check if current_piece_index is correct
     if (current_piece_index != num_of_pieces_to_evaluate)
     {
-        // printf("Piece count mismatch.. ??\n");
+        printf("Piece count mismatch.. ??\n");
         return 1;
     }
 
@@ -104,6 +106,7 @@ static int get_ai_move()
     int best_from_col = piece_collection[0][1];
     int best_to_row = piece_collection[0][2];
     int best_to_col = piece_collection[0][3];
+    int best_score = -1;
 
     // printf("Rank(%d) piece_count: %d\n", rank, piece_count);
 
@@ -115,27 +118,38 @@ static int get_ai_move()
 
     while (piece_index_count < num_of_pieces_to_evaluate)
     {
-        // printf("***** Here... *****\n");
-        int piece[4];
-        piece[0] = piece_index_count;                      // The index of of the piece in the piece_index array
-        piece[1] = piece_collection[piece_index_count][0]; // The row of the piece on the board
-        piece[2] = piece_collection[piece_index_count][1]; // The col of the piece on the board
-        piece[3] = current_player;                         // The number of pieces for this player on the board
-        // printf("***** Here... *****\n");
-        piece_index_count++;
+        from_row = piece_collection[piece_index_count][0];
+        from_col = piece_collection[piece_index_count][1];
+        //to_row = -1;
+        //to_col = -1;
+        int best_score = -1;
 
-        int piece_index = piece[0];
-        from_row = piece[1];
-        from_col = piece[2];
-        to_row = -1;
-        to_col = -1;
-        current_player = piece[3];
 
-        int move[4];
-        move[0] = -2;
-        move[1] = -2;
-        move[2] = -2;
-        move[3] = -2;
+        // Get the details of the piece at piece_collection[piece_index_count]
+        // int piece[4];
+        // piece[0] = piece_index_count;                      // The index of of the piece in the piece_index array
+        // piece[1] = piece_collection[piece_index_count][0]; // The row of the piece on the board
+        // piece[2] = piece_collection[piece_index_count][1]; // The col of the piece on the board
+        // piece[3] = current_player;                         // The number of pieces for this player on the board
+        // printf("***** Here... *****\n");
+        
+
+        // int piece_index = piece[0];
+        // from_row = piece[1];
+        // from_col = piece[2];
+        // to_row = -1;
+        // to_col = -1;
+        //current_player = piece[3];
+
+        // int current_piece_row = piece_collection[piece_index][0];
+        // int current_piece_col = piece_collection[piece_index][1];
+        // int current_piece_best_score
+
+        // int move[4];
+        // move[0] = -2;
+        // move[1] = -2;
+        // move[2] = -2;
+        // move[3] = -2;
         // [0] will be the piece index
         // [1] and [2] will be the to_row and to_col
         // [3] will be the score
@@ -146,10 +160,10 @@ static int get_ai_move()
         int attempts = 0;
         do
         {
-            from_row = rand() % BOARD_SIZE_X;
-            from_col = rand() % BOARD_SIZE_Y;
-            to_row = rand() % BOARD_SIZE_X;
-            to_col = rand() % BOARD_SIZE_Y;
+            int fake_from_row = rand() % BOARD_SIZE_X;
+            int fake_from_col = rand() % BOARD_SIZE_Y;
+            int fake_to_row = rand() % BOARD_SIZE_X;
+            int fake_to_col = rand() % BOARD_SIZE_Y;
             attempts++;
 
             //is_valid_move(from_row, from_col, to_row, to_col, current_player);
@@ -179,10 +193,10 @@ static int get_ai_move()
                 {
                     if (is_valid_move(from_row, from_col, to_row, to_col, current_player))
                     {
-                        printf("Valid move!!!\n");
+                        //printf("Valid move!!!\n");
                         // So, evaluate this move
                         int score = evaluate_move(from_row, from_col, to_row, to_col, current_player, MAX_DEPTH);
-                        printf("Eval score %d, move[3] %d\n", score, move[3]);
+                        //printf("Eval score %d, move[3] %d\n", score, best_score);
                         // Check if evaluate_move returned a valid score
                         if (score == -1)
                         {
@@ -191,22 +205,22 @@ static int get_ai_move()
                         }
 
                         // This is the only move we need to pass back to the master
-                        if (score > move[3])
+                        if (score > best_score)
                         {
-                            move[1] = to_row;
-                            move[2] = to_col;
-                            move[3] = score;
+                            best_to_row = to_row;
+                            best_to_col = to_col;
+                            best_score = score;
                             // printf("New best score\n");
-                        } else if (score == move[3])
+                        } else if (score == best_score)
                         // If this move generates the same score as the current best
                         // change to the new move 50% of the time.
                         {
                             if (rand() % 2 == 0)
                             {
                                 // printf("took rand\n");
-                                move[1] = to_row;
-                                move[2] = to_col;
-                                move[3] = score;
+                                best_to_row = to_row;
+                                best_to_col = to_col;
+                                best_score = score;
                             }
                             else
                             {
@@ -219,19 +233,23 @@ static int get_ai_move()
         }
 
         //  Update piece_index with the best move found for that piece
-        piece_collection[move[0]][2] = move[1];
-        piece_collection[move[0]][3] = move[2];
-        piece_collection[move[0]][4] = move[3];
+        piece_collection[piece_index_count][2] = best_to_row;
+        piece_collection[piece_index_count][3] = best_to_col;
+        piece_collection[piece_index_count][4] = best_score;
+
+        piece_index_count++;
     }
 
-    // Update best score and move
-    int best_score = -1;
+    // All pieces have explored their moves to MAX_DEPTH (or less)
+    // Find the one that has the best score and play that move.
+    int piece_best_score = -1;
     for (int i = 0; i < num_of_pieces_to_evaluate; i++)
     {
-        printf("Best score is: %d\n", piece_collection[i][4]);
-        if (piece_collection[i][4] > best_score)
+        //printf("Best score is: %d\n", piece_collection[i][4]);
+        if (piece_collection[i][4] > piece_best_score
+        || (piece_collection[i][4] == piece_best_score && rand() % 2 == 0))
         {
-            best_score = piece_collection[i][4];
+            piece_best_score = piece_collection[i][4];
             from_row = piece_collection[i][0];
             from_col = piece_collection[i][1];
             to_row = piece_collection[i][2];
@@ -239,7 +257,7 @@ static int get_ai_move()
         }
     }
 
-    if (best_score == -1 || best_to_row == -1 || best_to_col == -1)
+    if (piece_best_score == -1 || best_to_row == -1 || best_to_col == -1)
     {
         printf("AI cannot find a valid move.\n");
         return 1;
@@ -247,7 +265,10 @@ static int get_ai_move()
 
     else
     {
+        printf("AI move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+
         update_board(from_row, from_col, to_row, to_col, current_player);
+        
         return 0;
     }
 }
