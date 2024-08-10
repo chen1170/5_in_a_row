@@ -27,7 +27,7 @@ static void switch_player()
 
 static int get_ai_move_original()
 {
-    // 简单AI：随机选择一个合法位置
+    // random move
     int from_row, from_col, to_row, to_col;
     int attempts = 0;
     do

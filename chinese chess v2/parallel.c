@@ -1,19 +1,11 @@
 #include <mpi.h>
 #include <omp.h>
-// #include <limits.h>
 #include "parallel.h"
 #include "board.h"
 // #include "game.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-
-// static int evaluate_board();
-// static int is_game_over();
-// static int count_consecutive(int row, int col, int dx, int dy, PieceType piece);
-// static int evaluate_position(int row, int col, PieceType piece);
 
 MPI_Request req;
 MPI_Datatype pieceType;
@@ -39,7 +31,6 @@ void cleanup_parallel_env()
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    // 如果需要清理并行环境，可以在这里添加代码
     // Send termination signals to other MPI processes to shutdown the workers
     signalBuf = 0;
     for (int i = 1; i < size; i++)
@@ -80,9 +71,6 @@ int get_best_parallel(P_Colour current_player)
         MPI_Request reqs[size - 1];
         MPI_Request reqs2[size - 1];
         // printf("Parallel AI move... current player is %d\n", current_player);
-
-        // 主进程逻辑
-
         // Send the board to all processes...
         int piece_size = sizeof(Piece);
         int board_size = BOARD_SIZE_X * BOARD_SIZE_Y;
