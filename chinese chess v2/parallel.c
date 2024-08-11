@@ -87,6 +87,7 @@ int get_best_parallel(P_Colour current_player)
 
         // How many pieces for this player on the board
         int num_of_pieces_to_evaluate = 0;
+        #pragma omp parallel for collapse(2)
         for (int row = 0; row < BOARD_SIZE_X; row++)
         {
             for (int col = 0; col < BOARD_SIZE_Y; col++)
@@ -94,6 +95,7 @@ int get_best_parallel(P_Colour current_player)
                 //printf("Checking piece at %d %d\n", row, col);
                 if (get_piece(row, col).colour == current_player)
                 {
+                    #pragma omp critical
                     num_of_pieces_to_evaluate++;
                 }
             }
@@ -115,6 +117,7 @@ int get_best_parallel(P_Colour current_player)
         // [0] and [1] are the from_row and from_col
         // [2] and [3] will be the evaluated best move to_row and to_col
         // [4] will be the score (as projected after MAX_DEPTH moves down this path)
+        #pragma omp parallel for collapse(2)
         for (int row = 0; row < BOARD_SIZE_X; row++)
         {
             for (int col = 0; col < BOARD_SIZE_Y; col++)
@@ -126,6 +129,7 @@ int get_best_parallel(P_Colour current_player)
                     piece_collection[current_piece_index][2] = -1;
                     piece_collection[current_piece_index][3] = -1;
                     piece_collection[current_piece_index][4] = -1;
+                    #pragma omp critical
                     current_piece_index++;
                 }
             }
@@ -219,18 +223,18 @@ int get_best_parallel(P_Colour current_player)
                 free(move);
 
                 // Update best score and move
-                
+                #pragma omp parallel for
                 for (int i = 0; i < num_of_pieces_to_evaluate; i++)
                 {
                     if ((piece_collection[i][4] > piece_best_score && rand() % 100 < 80)
-                    || (piece_collection[i][4] == piece_best_score && rand() % 2 == 0))
+                        || (piece_collection[i][4] == piece_best_score && rand() % 2 == 0))
                     {
                         // printf("Master updating best move for piece at index %d\n", i);
-                        piece_best_score = piece_collection[i][4];
-                        from_row = piece_collection[i][0];
-                        from_col = piece_collection[i][1];
-                        to_row = piece_collection[i][2];
-                        to_col = piece_collection[i][3];
+                                piece_best_score = piece_collection[i][4];
+                                from_row = piece_collection[i][0];
+                                from_col = piece_collection[i][1];
+                                to_row = piece_collection[i][2];
+                                to_col = piece_collection[i][3];
                     }
                 }
 
@@ -398,6 +402,7 @@ void parallel_worker()
 
             if (errors_detected == 0)
             {
+                #pragma omp parallel for collapse(2)
                 for (int to_row = 0; to_row < BOARD_SIZE_X; to_row++)
                 {
                     for (int to_col = 0; to_col < BOARD_SIZE_Y; to_col++)
@@ -409,39 +414,41 @@ void parallel_worker()
                             
                             if (is_valid_move(from_row, from_col, to_row, to_col, current_player)) {
                                 //printf("Worker %d VALID MOVE %d %d %d %d\n", rank, from_row, from_col, to_row, to_col);
-                            
-                                // So, evaluate this move
-                                int score = evaluate_move(from_row, from_col, to_row, to_col, current_player, MAX_DEPTH);
-                            
-                                // Check if evaluate_move returned a valid score
-                                if (score == -1) {
-                                    fprintf(stderr, "Error: Failed to evaluate move.\n");
-                                    return;
-                                }
-                            
-                                // printf("Worker %d score for move %d %d %d %d is %d\n", rank, from_row, from_col, to_row, to_col, score);
-                            
-                                // This is the only move we need to pass back to the master
-                                if (score > best_score)
+                                #pragma omp critical
                                 {
-                                    best_to_row = to_row;
-                                    best_to_col = to_col;
-                                    best_score = score;
-                                    // printf("New best score\n");
-                                } else if (score == best_score)
-                                // If this move generates the same score as the current best
-                                // change to the new move 50% of the time.
-                                {
-                                    if (rand() % 2 == 0)
+                                    // So, evaluate this move
+                                    int score = evaluate_move(from_row, from_col, to_row, to_col, current_player, MAX_DEPTH);
+                                
+                                    // Check if evaluate_move returned a valid score
+                                    if (score == -1) {
+                                        fprintf(stderr, "Error: Failed to evaluate move.\n");
+                                        
+                                    }
+                                
+                                    // printf("Worker %d score for move %d %d %d %d is %d\n", rank, from_row, from_col, to_row, to_col, score);
+                                
+                                    // This is the only move we need to pass back to the master
+                                    if (score > best_score)
                                     {
-                                        // printf("took rand\n");
                                         best_to_row = to_row;
                                         best_to_col = to_col;
                                         best_score = score;
-                                    }
-                                    else
+                                        // printf("New best score\n");
+                                    } else if (score == best_score)
+                                    // If this move generates the same score as the current best
+                                    // change to the new move 50% of the time.
                                     {
-                                        // printf("did not take rand\n");
+                                        if (rand() % 2 == 0)
+                                        {
+                                            // printf("took rand\n");
+                                            best_to_row = to_row;
+                                            best_to_col = to_col;
+                                            best_score = score;
+                                        }
+                                        else
+                                        {
+                                            // printf("did not take rand\n");
+                                        }
                                     }
                                 }
                             }
