@@ -70,7 +70,7 @@ int get_best_parallel(P_Colour current_player)
     {
         // Step 1: Initialize worker 0, the controller
 
-        printf("Parallel AI move starting... current player is %d\n", current_player);
+        // -- printf("Parallel AI move starting... current player is %d\n", current_player);
  
         // Alert workers to prepare to receive the board!
         for (int i = 1; i < size; i++)
@@ -256,16 +256,14 @@ int get_best_parallel(P_Colour current_player)
         MPI_Type_free(&pieceType);
 
 
-        if (current_player == RED)
-            printf("Parallel AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
-        else
-            printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+        // if (current_player == RED)
+        //     printf("Parallel AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+        // else
+        //     printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
 
         update_board(from_row, from_col, to_row, to_col, current_player);
 
         return 0;
-
-        // 
     }
     else
     {

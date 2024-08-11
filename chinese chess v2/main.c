@@ -16,7 +16,7 @@
 
 struct timeval tv;
 
-void run_performance_test(GameMode mode, int num_steps) {
+void run_performance_test(GameMode mode, int num_steps, int size) {
     double start_time, end_time;
     double serial_time = 0.0, parallel_time = 0.0;
     
@@ -42,7 +42,7 @@ void run_performance_test(GameMode mode, int num_steps) {
 
     double total_time = end_time - start_time;
     printf("\n");
-    printf("Performance test for mode %d took %f seconds\n", mode, total_time);
+    printf("Total time for %d games with %d processes for mode %d: %f seconds\n", num_steps, size, mode, total_time);
     if (parallel_time > 0) {
         printf("Total parallel time: %f seconds (%.2f%%)\n", parallel_time, (parallel_time / total_time) * 100);
     }
@@ -75,12 +75,12 @@ int main(int argc, char *argv[])
                 if (argc > 2) {
                     num_steps = atoi(argv[2]);
                 }
-                printf("Running performance tests...\n");
+                // printf("Running performance tests...\n");
                 // printf("Testing non-parallel AI...\n");
-                run_performance_test(AI_VS_AI, num_steps);
+                // run_performance_test(AI_VS_AI, num_steps);
 
                 printf("Testing parallel AI...\n");
-                run_performance_test(PARALLEL_AI, num_steps);
+                run_performance_test(PARALLEL_AI, num_steps, size);
                 
                 cleanup_parallel_env();
                 MPI_Finalize();

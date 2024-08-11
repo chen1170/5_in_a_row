@@ -387,7 +387,7 @@ void run_game(int show_board, double *serial_time, double *parallel_time)
 
         total_moves++;
 
-        printf("Moves = %d\n", total_moves);
+        // -- printf("Moves = %d\n", total_moves);
 
         if (draw)
         {
