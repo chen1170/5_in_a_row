@@ -900,10 +900,10 @@ static int evaluate_board(P_Colour player)
     //printf("Scores: Black: %d, Red: %d\n", black_score, red_score);
     if (player == BLACK)
     {
-        return black_score - red_score;
+        return black_score; // - red_score;
     }
     else
     {
-        return red_score - black_score;
+        return red_score; // - black_score;
     }
 }

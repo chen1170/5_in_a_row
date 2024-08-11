@@ -426,7 +426,7 @@ void parallel_worker()
                                     // printf("Worker %d score for move %d %d %d %d is %d\n", rank, from_row, from_col, to_row, to_col, score);
                                 
                                     // This is the only move we need to pass back to the master
-                                    if (score > best_score)
+                                    if (score > best_score && rand() % 100 < 80)
                                     {
                                         best_to_row = to_row;
                                         best_to_col = to_col;

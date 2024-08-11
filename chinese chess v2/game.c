@@ -205,7 +205,7 @@ static int get_ai_move()
                         //}
 
                         // This is the only move we need to pass back to the master
-                        if (score > best_score)
+                        if (score > best_score && rand() % 100 < 80)
                         {
                             best_to_row = to_row;
                             best_to_col = to_col;
