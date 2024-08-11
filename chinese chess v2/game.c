@@ -8,6 +8,7 @@
 
 static GameMode current_mode;
 static P_Colour current_player;
+static int serial_tasks = 0;
 
 void init_game(GameMode mode)
 {
@@ -21,7 +22,6 @@ void init_game(GameMode mode)
     // if (mode == PARALLEL_AI || mode == HUMAN_VS_PARALLEL_AI) {
     // init_parallel_env();
     //}
-    // srand(time(NULL));
 }
 
 static void switch_player()
@@ -128,6 +128,10 @@ static int get_ai_move(int show_board)
     // Loop until all pieces have been evaluated
     while (piece_index_count < num_of_pieces_to_evaluate)
     {
+        // Increment the number of serial tasks so that we
+        // can compare the performance of the serial and parallel
+        serial_tasks++;
+
         from_row = piece_collection[piece_index_count][0];
         from_col = piece_collection[piece_index_count][1];
         int best_score = -1;
@@ -344,12 +348,20 @@ void run_game(int show_board, double *serial_time, double *parallel_time)
         if (draw)
         {
             printf("Draw!\n");
+            if (current_mode == AI_VS_AI)
+            {
+                printf("Serials tasks: %d\n", serial_tasks);
+            }
             break;
         }
 
         if (total_moves >= MAX_MOVES_PER_GAME)
         {
             printf("Game over: max moves limit reached.. Draw!\n");
+            if (current_mode == AI_VS_AI)
+            {
+                printf("Serials tasks: %d\n", serial_tasks);
+            }
             break;
         }
 
@@ -362,6 +374,11 @@ void run_game(int show_board, double *serial_time, double *parallel_time)
                 printf("BLACK wins!\n");
             else
                 printf("RED wins!\n");
+            
+            if (current_mode == AI_VS_AI)
+            {
+                printf("Serials tasks: %d\n", serial_tasks);
+            }
         }
         else
         {
