@@ -14,7 +14,7 @@
 #include "parallel.h"
 
 
-struct timeval tv;
+struct timeval tv;  // Used to seed random number generator
 
 void run_performance_test(GameMode mode, int num_steps, int size) {
     double start_time, end_time;
@@ -51,12 +51,15 @@ void run_performance_test(GameMode mode, int num_steps, int size) {
 
 int main(int argc, char *argv[])
 {
+    // Initialize MPI
     MPI_Init(&argc, &argv);
     
+    // Get the rank and size of the MPI world
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    // Seed the random number generator
     gettimeofday(&tv, NULL);
     srand((rank + 1) * tv.tv_usec);
 
@@ -75,6 +78,7 @@ int main(int argc, char *argv[])
                 if (argc > 2) {
                     num_steps = atoi(argv[2]);
                 }
+
                 // printf("Running performance tests...\n");
                 // printf("Testing non-parallel AI...\n");
                 // run_performance_test(AI_VS_AI, num_steps);
@@ -92,15 +96,20 @@ int main(int argc, char *argv[])
 
         init_game(mode);
         run_game(1, &game_serial_time, &game_parallel_time);
-        //printf("Rank(0) Done...\n");
-        cleanup_parallel_env();
+        // printf("Rank(0) Done...\n");
+
+        // Game is over, so cleanup the parallel environment
+        cleanup_parallel_env(); // Done my rank 0 so that it can tell the workers to terminate
     }
     else
     {
+        // This is a worker process, so initialize the parallel environment
+        // and the worker code
         init_parallel_env();
         parallel_worker();  
     }
 
+    // Cleanup MPI
     MPI_Finalize();
     return 0;
 }
