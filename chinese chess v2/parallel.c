@@ -23,6 +23,7 @@ Piece board_worker_copy[BOARD_SIZE_X][BOARD_SIZE_Y];
 
 void init_parallel_env()
 {
+    // Initialize OMP
     omp_set_num_threads(omp_get_max_threads());
 }
 
@@ -31,17 +32,28 @@ void cleanup_parallel_env()
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+
     // Send termination signals to other MPI processes to shutdown the workers
     signalBuf = 0;
     for (int i = 1; i < size; i++)
     {
-        //printf("Sending term signal to p(%d)\n", i);
+        // printf("Sending term signal to p(%d)\n", i);
         MPI_Isend(&terminate_signal, 1, MPI_INT, i, IDLE_TAG, MPI_COMM_WORLD, &req);
     }
 }
 
-void createPieceMPIType(MPI_Datatype *newtype)
+void createPieceMPIType(MPI_Datatype *new_mpi_type)
 {
+    // Create a custom MPI data type for our piece struct, make life a little easier!
+    // The piece struct is defined as three enums (ints) and a char as follows:
+
+    // typedef struct {
+    // P_Type type;
+    // P_Colour colour;
+    // P_TypeCode code;
+    // char board_code;
+    // } Piece;
+    
     const int items = 4;
     int blocklengths[4] = {1, 1, 1, 1};
     MPI_Datatype types[4] = {MPI_INT, MPI_INT, MPI_INT, MPI_CHAR};
@@ -52,8 +64,8 @@ void createPieceMPIType(MPI_Datatype *newtype)
     offsets[2] = offsetof(Piece, code);
     offsets[3] = offsetof(Piece, board_code);
 
-    MPI_Type_create_struct(items, blocklengths, offsets, types, newtype);
-    MPI_Type_commit(newtype);
+    MPI_Type_create_struct(items, blocklengths, offsets, types, new_mpi_type);
+    MPI_Type_commit(new_mpi_type);
 }
 
 //int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_col, Piece *board, P_Colour current_player)
@@ -335,26 +347,6 @@ void parallel_worker()
             // printf("Worker %d working...\n", rank);
 
             task_count++;
-
-            // Since we do not have a complex algorithm for playing chess
-            // we make simulate some complexity by evaluating 1 million random
-            // moves for each piece.
-            int attempts = 0;
-            do {
-                from_row = rand() % BOARD_SIZE_X;
-                from_col = rand() % BOARD_SIZE_Y;
-                to_row = rand() % BOARD_SIZE_X;
-                to_col = rand() % BOARD_SIZE_Y;
-                attempts++;
-
-                //is_valid_move(from_row, from_col, to_row, to_col, current_player);
-
-            }
-            while (attempts < MAX_SIMULATED_WORK);
-            //printf("Done simulated work...%d\n", attempts);
-
-            //printf("Worker %d done working on simulated work...%d\n", rank, attempts);
-
 
             // Receive work to the worker
             // printf("Worker %d waiting for piece...\n", rank);
