@@ -68,10 +68,10 @@ void createPieceMPIType(MPI_Datatype *new_mpi_type)
     MPI_Type_commit(new_mpi_type);
 }
 
-//int get_best_move_parallel(int *from_row, int *from_col, int *to_row, int *to_col, Piece *board, P_Colour current_player)
 int get_best_parallel(P_Colour current_player)
 {
     int from_row, from_col, to_row, to_col;
+
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -80,31 +80,44 @@ int get_best_parallel(P_Colour current_player)
 
     if (rank == 0)
     {
-        // Step 1: Initialize worker 0, the controller
+        // Step 1: Initialize workers with a copy of the board
 
         // -- printf("Parallel AI move starting... current player is %d\n", current_player);
  
         // Alert workers to prepare to receive the board!
         for (int i = 1; i < size; i++)
         {
+            // this tells the worker to get ready to work!
             MPI_Recv(&signalBuf, 1, MPI_INT, i, IDLE_TAG, MPI_COMM_WORLD, &status);
+            
+            // This sends a signal indicating what work they will need to do, in this
+            // they are being asked to receiving the board:
             MPI_Send(&board_signal, 1, MPI_INT, i, IDLE_TAG, MPI_COMM_WORLD);
         }
 
-        // Send the current board to all processes using a broadcast.
+        // Now that the workers are notified to be ready to receive the board...
+        
+        // First, get the board size
         int board_size = BOARD_SIZE_X * BOARD_SIZE_Y;
+
+        // Create the custom MPI data type for the Piece struct:
         createPieceMPIType(&pieceType);
 
+        // Now broadcast the board:
         MPI_Bcast(board, board_size, pieceType, 0, MPI_COMM_WORLD);
 
-        // How many pieces for this player on the board
+        // Step 2 - Figure out what pieces need to be evaluated
+
+        // How many pieces for this player on the board?
         int num_of_pieces_to_evaluate = 0;
+
+        // Loop over the board and count how pieces this player has left
         #pragma omp parallel for collapse(2)
         for (int row = 0; row < BOARD_SIZE_X; row++)
         {
             for (int col = 0; col < BOARD_SIZE_Y; col++)
             {
-                //printf("Checking piece at %d %d\n", row, col);
+                // printf("Checking piece at %d %d\n", row, col);
                 if (get_piece(row, col).colour == current_player)
                 {
                     #pragma omp critical
@@ -113,22 +126,24 @@ int get_best_parallel(P_Colour current_player)
             }
         }
 
-        //printf("Number of pieces to evaluate: %d\n", num_of_pieces_to_evaluate);
+        //p rintf("Number of pieces to evaluate: %d\n", num_of_pieces_to_evaluate);
 
-        // Index all of the pieces for this player.
+        // Now that we know how many pieces we have to evaluate, we can
+        // index all of the pieces for this player in a collection:
         int current_piece_index = 0;
-        //int piece_collection[num_of_pieces_to_evaluate][5];
 
+        // Allocate memory for the piece collection
         int **piece_collection = (int **)malloc(num_of_pieces_to_evaluate * sizeof(int *));
         for (int i = 0; i < num_of_pieces_to_evaluate; i++) {
             piece_collection[i] = (int *)malloc(5 * sizeof(int));
         }
 
-        //printf("Allocated piece collection\n");
+        // printf("Allocated piece collection\n");
 
         // [0] and [1] are the from_row and from_col
         // [2] and [3] will be the evaluated best move to_row and to_col
         // [4] will be the score (as projected after MAX_DEPTH moves down this path)
+        
         #pragma omp parallel for collapse(2)
         for (int row = 0; row < BOARD_SIZE_X; row++)
         {
@@ -136,27 +151,32 @@ int get_best_parallel(P_Colour current_player)
             {
                 if (get_piece(row, col).colour == current_player)
                 {
+                    // The piece at this position belongs to the current player
                     piece_collection[current_piece_index][0] = row;
                     piece_collection[current_piece_index][1] = col;
                     piece_collection[current_piece_index][2] = -1;
                     piece_collection[current_piece_index][3] = -1;
                     piece_collection[current_piece_index][4] = -1;
+
                     #pragma omp critical
                     current_piece_index++;
                 }
             }
         }
 
-        //printf("Number of pieces to evaluate: %d\n", current_piece_index);
+        // printf("Number of pieces to evaluate: %d\n", current_piece_index);
 
-        // Check if current_piece_index is correct
+        // Check if current_piece_index is correct, meaning we found all the pieces
         if (current_piece_index != num_of_pieces_to_evaluate)
         {
-            // printf("Piece count mismatch.. ??\n");
+            printf("Piece count mismatch.. ??\n");
             return 1;
         }
 
-        // Set defaults for the return pointers
+        // Step 3: Send work to the workers as they report they are available
+        //         and we have work for them to complete...
+
+        // Set defaults for the final values
         from_row = -1;
         from_col = -1;
         to_row = -1;
@@ -172,37 +192,60 @@ int get_best_parallel(P_Colour current_player)
         int work_completed = 0;
         int piece_best_score = -1;
         int idle_workers = size - 1;
-        //printf("Master waiting for workers to be ready...\n");
-        //while (piece_index_count < num_of_pieces_to_evaluate)
+
+        // printf("Master waiting for workers to be ready...\n");
+
+        // Loop until all pieces have been evaluated
         while(1)
         {
-            // First check to see if we need to send any pieces
+            // First check to see if we need and can to send any pieces
+            // If piece_index_count is less than the number of pieces to evaluate
+            // we still need someone to evaluate a piece.
+            // If idle_workers is greater than 0, we have workers available to do work!
             if (piece_index_count < num_of_pieces_to_evaluate && idle_workers > 0)
             {
-                //printf("Checking piece at index %d...\n", piece_index_count);
+                // printf("Checking piece at index %d...\n", piece_index_count);
                 int best_score = -1;
 
                 // printf("Master best move: %d %d %d %d\n", *from_row, *from_col, *to_row, *to_col);
 
+                // Available workers send an idle signal after they complete work
+                // Since we have work to be done, and there are idle workers, we can receive a signal
+                // from an availalbe worker o the IDLE_TAG...
                 MPI_Recv(&signalBuf, 1, MPI_INT, MPI_ANY_SOURCE, IDLE_TAG, MPI_COMM_WORLD, &status);
 
-                // check for errors using MPI
+                // Get the rank of the available worker:
                 int available_worker = status.MPI_SOURCE;
-                //printf("Master received idle signal from worker %d, sendinfg piece %d \n", available_worker, piece_index_count);
+                // printf("Master received idle signal from worker %d, sendinfg piece %d \n", available_worker, piece_index_count);
 
-                // Send work to the worker
+                // Send work to the worker:
+                // Allocate memory for the piece array structure we want to send:
                 int * piece = (int *)malloc(4 * sizeof(int));
                 piece[0] = piece_index_count;                 // The index of of the piece in the piece_index array
                 piece[1] = piece_collection[piece_index_count][0]; // The row of the piece on the board
                 piece[2] = piece_collection[piece_index_count][1]; // The col of the piece on the board
                 piece[3] = current_player;                    // The number of pieces for this player on the board
 
+                // Send a work signal to the worker to let them know work is coming:
                 MPI_Send(&work_signal, 1, MPI_INT, available_worker, IDLE_TAG, MPI_COMM_WORLD);
+
+                // Send the work on the WORK_TAG with the piece as the data:
                 MPI_Send(piece, 4, MPI_INT, available_worker, WORK_TAG, MPI_COMM_WORLD);
+                
+                // Increment the piece_index_count
                 piece_index_count++;
+
+                // Decrease the idel work count, we will increment this
+                // when we get the work back from the worker
+                idle_workers--;
+
+                // Free the piece array that was allocated
                 free(piece);
             }
 
+            // Check to see if all of the work has been completed
+            // This skips the MPI_Iprobe call that follows if 
+            // all work is done...
             if (work_completed == num_of_pieces_to_evaluate)
             {
                 //printf("Master done evaluating all pieces\n");
@@ -210,73 +253,93 @@ int get_best_parallel(P_Colour current_player)
             }
 
             // After each send, check to see if anyone is returning completed work
+            // We don't want to sit waiting for work, since we may have more
+            // pieces to send to other workers, so we just probe to see if
+            // worker is sending a WORK_TAG back:
             MPI_Iprobe(MPI_ANY_SOURCE, WORK_TAG, MPI_COMM_WORLD, &flag, MPI_STATUS_IGNORE);
             if (flag)
             {
+                // We do have someone trying to send work back!
+
+                // Allocate memory for the move array structure we want to receive:
                 int * move = (int *)malloc(4 * sizeof(int));
-                MPI_Recv(move, 4, MPI_INT, MPI_ANY_SOURCE, WORK_TAG, MPI_COMM_WORLD, &status);
-
-                // check the values of move:
-                //printf("Master received move for piece at index %d: %d %d %d\n", move[0], move[1], move[2], move[3]);
-
-
-                // Receieve results back from the workers!
-
                 // [0] will be the piece index
                 // [1] and [2] will be the to_row and to_col
                 // [3] will be the score
 
+                // Receive the completed work:
+                MPI_Recv(move, 4, MPI_INT, MPI_ANY_SOURCE, WORK_TAG, MPI_COMM_WORLD, &status);
+
                 // printf("Master received move for piece at index %d\n", move[0]);
-                //  Update piece_index with the best move found for that piece
+                
+                // Update the piece_collection with the move data:
                 piece_collection[move[0]][2] = move[1];
                 piece_collection[move[0]][3] = move[2];
                 piece_collection[move[0]][4] = move[3];
 
+                // Free the move array that was allocated
                 free(move);
 
-                // Update best score and move
+                // Now that we have a new result, let's iterate over the piece_collection
+                // and update the best known move so far:
                 #pragma omp parallel for
                 for (int i = 0; i < num_of_pieces_to_evaluate; i++)
                 {
                     if ((piece_collection[i][4] > piece_best_score && rand() % 100 < 80)
                         || (piece_collection[i][4] == piece_best_score && rand() % 2 == 0))
                     {
-                        // printf("Master updating best move for piece at index %d\n", i);
-                                piece_best_score = piece_collection[i][4];
-                                from_row = piece_collection[i][0];
-                                from_col = piece_collection[i][1];
-                                to_row = piece_collection[i][2];
-                                to_col = piece_collection[i][3];
+                        #pragma omp critical
+                        {
+                            // printf("Master updating best move for piece at index %d\n", i);
+                            piece_best_score = piece_collection[i][4];
+                            from_row = piece_collection[i][0];
+                            from_col = piece_collection[i][1];
+                            to_row = piece_collection[i][2];
+                            to_col = piece_collection[i][3];
+                        }
                     }
                 }
 
+                // Increment the work_completed count
                 work_completed++;
+
+                // Increment the idle_workers count since this worker is now free for new work!
                 idle_workers++;
             }
         }
 
+        // End of the work loop!
+
+        // Step 4: Cleanup and return the best move
+
         // print the int values of the best move
         // printf("Master best move: %d %d %d %d\n", *from_row, *from_col, *to_row, *to_col);
 
+        // Did we find a valid move?
         if (piece_best_score == -1 || to_row == -1 || to_col == -1)
         {
             printf("AI cannot find a valid move.\n");
             return 1;
         }
 
+        // Free memory for the piece collection
         for (int i = 0; i < num_of_pieces_to_evaluate; i++) {
             free(piece_collection[i]);
         }
+
+        // Free the piece collection
         free(piece_collection);
 
+        // Free the MPI datatype
         MPI_Type_free(&pieceType);
 
+        // Print the move:
+        if (current_player == RED)
+            printf("Parallel AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+        else
+            printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
 
-        // if (current_player == RED)
-        //     printf("Parallel AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
-        // else
-        //     printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
-
+        // Update the board with the move!
         update_board(from_row, from_col, to_row, to_col, current_player);
 
         return 0;
@@ -342,10 +405,6 @@ void parallel_worker()
 
         if (signalBuf == receive_work_signal)
         {
-            // if (task_count == 0)
-            //{
-            // printf("Worker %d working...\n", rank);
-
             task_count++;
 
             // Receive work to the worker
