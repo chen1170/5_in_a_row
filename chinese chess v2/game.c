@@ -57,7 +57,7 @@ static int get_ai_move_original()
     return 0;
 }
 
-static int get_ai_move()
+static int get_ai_move(int show_board)
 {
     // Tries to generate a move that is the best move for the current player
     int from_row, from_col, to_row, to_col;
@@ -221,12 +221,14 @@ static int get_ai_move()
     else
     {
         // Show the move:
-        if (current_player == RED)
-            printf("AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
-        else
-            printf("AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
-        // printf("AI move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
-        
+        if (show_board)
+        {  
+            if (current_player == RED)
+                printf("AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+            else
+                printf("AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+            // printf("AI move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+        }
         // Finally make the move by updating the board!
         update_board(from_row, from_col, to_row, to_col, current_player);
         
@@ -234,7 +236,7 @@ static int get_ai_move()
     }
 }
 
-static int get_parallel_ai_move()
+static int get_parallel_ai_move(int show_board)
 {
     int from_row = 0;
     int from_col = 0;
@@ -245,7 +247,7 @@ static int get_parallel_ai_move()
 
     Piece *board_pointer = board[0];
     // printf("Parallel AI move...\n");
-    int p = get_best_parallel(current_player);
+    int p = get_best_parallel(show_board, current_player);
     if (p)
     {
         printf("Parallel AI cannot find a valid move.\n");
@@ -297,7 +299,7 @@ void run_game(int show_board, double *serial_time, double *parallel_time)
             else
             {
                 start_time = MPI_Wtime();
-                draw = get_ai_move(); // serial
+                draw = get_ai_move(show_board); // serial
                 end_time = MPI_Wtime();
                 *serial_time += (end_time - start_time);
             }
@@ -305,14 +307,14 @@ void run_game(int show_board, double *serial_time, double *parallel_time)
 
         case AI_VS_AI:
             start_time = MPI_Wtime();
-            draw = get_ai_move(); // serial
+            draw = get_ai_move(show_board); // serial
             end_time = MPI_Wtime();
             *serial_time += (end_time - start_time);
             break;
 
         case PARALLEL_AI:
             start_time = MPI_Wtime();
-            draw = get_parallel_ai_move(); // parallel
+            draw = get_parallel_ai_move(show_board); // parallel
             end_time = MPI_Wtime();
             *parallel_time += (end_time - start_time);
             break;
@@ -328,7 +330,7 @@ void run_game(int show_board, double *serial_time, double *parallel_time)
             else
             {
                 start_time = MPI_Wtime();
-                draw = get_parallel_ai_move(); // parallel
+                draw = get_parallel_ai_move(show_board); // parallel
                 end_time = MPI_Wtime();
                 *parallel_time += (end_time - start_time);
             }

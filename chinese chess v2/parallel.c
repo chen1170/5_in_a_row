@@ -68,7 +68,7 @@ void createPieceMPIType(MPI_Datatype *new_mpi_type)
     MPI_Type_commit(new_mpi_type);
 }
 
-int get_best_parallel(P_Colour current_player)
+int get_best_parallel(int show_board, P_Colour current_player)
 {
     int from_row, from_col, to_row, to_col;
 
@@ -334,11 +334,14 @@ int get_best_parallel(P_Colour current_player)
         MPI_Type_free(&pieceType);
 
         // Print the move:
-        if (current_player == RED)
-            printf("Parallel AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
-        else
-            printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
-
+        if (show_board)
+        {
+            if (current_player == RED)
+                printf("Parallel AI RED move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+            else
+                printf("Parallel AI BLACK move: %c%d %c%d\n", 'a' + from_row, from_col + 1, 'a' + to_row, to_col + 1);
+        }
+        
         // Update the board with the move!
         update_board(from_row, from_col, to_row, to_col, current_player);
 
