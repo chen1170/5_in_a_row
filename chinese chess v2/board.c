@@ -6,9 +6,6 @@
 Piece board[BOARD_SIZE_X][BOARD_SIZE_Y];
 Piece empty;
 
-//Piece board[BOARD_SIZE_X][BOARD_SIZE_Y];
-//Piece empty;
-
 // Setup a board for Chinese Chess
 void init_board()
 {
@@ -19,8 +16,7 @@ void init_board()
             // Place the correct pieces on the board for each i, j position
             // by creating a Piece struct and assigning it to the board
 
-            // Init with an empty piece
-            //Piece empty;
+            // Init each space with an empty piece
             Piece empty;
             empty.type = None;
             empty.colour = EMPTY;
@@ -606,8 +602,7 @@ void update_board(int from_row, int from_col, int to_row, int to_col, P_Colour p
 
         board[to_row][to_col] = board[from_row][from_col];
 
-        // Clear the old position
-        // Init with an empty piece
+        // Clear the old position by placing an empty piece
         Piece empty;
         empty.type = None;
         empty.colour = EMPTY;
@@ -657,7 +652,7 @@ int check_win()
 
 int parse_move(const char *from, const char *to, P_Colour player)
 {
-    //printf("Parse move...\n");
+    // printf("Parse move...\n");
     // Check if the input length is valid for "a4 a8" format
     // For now, I don't care about supporting more than one space...
     if (strlen(from) != 2 || strlen(to) != 2)
@@ -666,9 +661,9 @@ int parse_move(const char *from, const char *to, P_Colour player)
         return 0;
     }
 
-    //printf("Good length...\n");
-    //printf("From: %s\n", from);
-    //printf("To: %s\n", to);
+    // printf("Good length...\n");
+    // printf("From: %s\n", from);
+    // printf("To: %s\n", to);
 
     // Parse from position
     int from_row = from[0] - 'a'; // Convert column from letter to index
@@ -678,10 +673,10 @@ int parse_move(const char *from, const char *to, P_Colour player)
     int to_row = to[0] - 'a'; // Convert column from letter to index, skipping the space
     int to_col = to[1] - '1'; // Convert row from char to index
 
-    //printf("Parsed...\n");
+    // printf("Parsed...\n");
 
-    //printf("From: %d %d\n", from_row, from_col);
-    //printf("To: %d %d\n", to_row, to_col);
+    // printf("From: %d %d\n", from_row, from_col);
+    // printf("To: %d %d\n", to_row, to_col);
 
     if (is_valid_move(from_row, from_col, to_row, to_col, player))
     {
@@ -693,6 +688,7 @@ int parse_move(const char *from, const char *to, P_Colour player)
 }
 
 Piece get_piece(int row, int col) {
+    // Return the piece at a specified position on the board
     if (row >= 0 && row < BOARD_SIZE_X && col >= 0 && col < BOARD_SIZE_Y) {
         return board[row][col];
     }
@@ -701,14 +697,17 @@ Piece get_piece(int row, int col) {
 
 int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour player, int depth)
 {
-    //printf(" -->Evaluating move (%d %d) =>  (%d %d), depth = %d\n", from_row, from_col, to_row, to_col, depth);
+    // printf(" -->Evaluating move (%d %d) =>  (%d %d), depth = %d\n", from_row, from_col, to_row, to_col, depth);
 
     // We don't need to remember any of these moves, we just need to pass back the score so that the first move maps
-    // to the move tree with the best resulting score
-
+    // to the move tree with the best resulting score. So, this function will continue making moves until it reaches
+    // the specified depth, then it scores the board for the play. This represents the max score possible with the
+    // series of moves that were made. The goal is to say, hey if you make this move (the initial one) and the game
+    // follows this path, after three moves you will be in the stronger position as determined by the score returned.
     if (depth == 0)
     {
-        //printf(" -->Depth 0\n");
+        // We reached the max depth, so just evaluate the board and return the score.
+        // printf(" -->Depth 0\n");
         return evaluate_board(player);
     }
 
@@ -718,8 +717,11 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
 
         if (is_valid_move(from_row, from_col, to_row, to_col, player))
         {
-            //printf(" -->Valid move\n");
-            // Make a copy of the game board
+            // printf(" -->Valid move\n");
+            // Make a copy of the game board - we are going to make moves on the board
+            // as we move through each depth, so we need to make a copy so that we undo
+            // these moves as we unwind from the recursion.
+
             Piece *board_copy;
             board_copy = malloc(BOARD_SIZE_X * BOARD_SIZE_Y * sizeof(Piece));
             if (board_copy == NULL)
@@ -730,16 +732,17 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
 
             memcpy(board_copy, board, BOARD_SIZE_X * BOARD_SIZE_Y * sizeof(Piece));
 
-            //printf(" -->Made copy\n");
+            // printf(" -->Made copy\n");
 
-            // Make the move
+            // Make the move!
             update_board(from_row, from_col, to_row, to_col, player);
 
-            //printf(" -->Updated board\n");
+            // printf(" -->Updated board\n");
 
-            // Next player
+            // switch to the next player
             P_Colour next_player = (player == RED) ? BLACK : RED;
 
+            // Now explore the tree for the next move
             for (int this_piece_row = 0; this_piece_row < BOARD_SIZE_X; this_piece_row++)
             {
                 for (int this_piece_col = 0; this_piece_col < BOARD_SIZE_Y; this_piece_col++)
@@ -750,7 +753,8 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
                         {
                             for (int this_piece_to_col = 0; this_piece_to_col < BOARD_SIZE_Y; this_piece_to_col++)
                             {
-                                    score = evaluate_move(this_piece_row, this_piece_col, this_piece_to_row, this_piece_to_col, next_player, depth-1);
+                                // Reduce the depth by one...
+                                score = evaluate_move(this_piece_row, this_piece_col, this_piece_to_row, this_piece_to_col, next_player, depth-1);
                             }
                         }
                     }
@@ -759,13 +763,12 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
 
             // printf(" -->Done with depth\n");
 
-            // Undo the move
+            // Undo the move(s) by copying the board back to the original state
             memcpy(board, board_copy, BOARD_SIZE_X * BOARD_SIZE_Y * sizeof(Piece));
 
             free(board_copy);
-            //printf("Score returned: %d\n", score);
+            // printf("Score returned: %d\n", score);
             return score;
-
         }
         // printf("Invalid move... Depth = %d\n", depth);
         return evaluate_board(player);
@@ -774,15 +777,17 @@ int evaluate_move(int from_row, int from_col, int to_row, int to_col, P_Colour p
 
 static int evaluate_board(P_Colour player)
 {
-    //printf("Player: %d\n", player);
-    //print_board();
-    // Print which player we are evaluating the board for:
-    //printf("Evaluating board for player %d\n", player);
+    // printf("Evaluating board for player %d\n", player);
 
     // Had to come up with something, so I just count the piece values (loosely based on what I read online)
+    // Actual victory comes from capturing the general, however to serve as a measure for how good a move or
+    // series of moves are, we just count the value of the player's remaining pieces and interpret a higher score
+    // as a stronger position, very basic, but works our purposes. A more complex algorithm would be to use a might
+    // for example count how many moves away from capturing the opponent's general as a measure of strength, etc.
     int black_score = 0;
     int red_score = 0;
     int score = 0;
+
     if (player == RED) {
         for (int row = 0; row < BOARD_SIZE_X; row++)
         {
@@ -835,7 +840,7 @@ static int evaluate_board(P_Colour player)
                 }
             }
         }
-    }else if (player == BLACK){
+    } else if (player == BLACK){
         for (int row = 0; row < BOARD_SIZE_X; row++)
         {
             for (int col = 0; col < BOARD_SIZE_Y; col++)
@@ -897,7 +902,7 @@ static int evaluate_board(P_Colour player)
     // Red's score is is 80, the score differential would be 15, and would favour
     // this move, even though the actual score for Black is less.
 
-    //printf("Scores: Black: %d, Red: %d\n", black_score, red_score);
+    // printf("Scores: Black: %d, Red: %d\n", black_score, red_score);
     if (player == BLACK)
     {
         return black_score; // - red_score;

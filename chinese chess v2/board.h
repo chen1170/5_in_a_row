@@ -31,13 +31,13 @@ typedef enum {
 
 typedef enum {
     N = 0,
-    R = 1,     // Chariot / Rook
-    H = 2,     // Horse / Knight
-    E = 3,  // Elephant / Bishop
-    A = 4,    // Advisor / Guard
-    G = 5,  // General / King
-    C = 6,    // Cannon
-    S = 7    // Soldier / Pawn
+    R = 1,      // Chariot / Rook
+    H = 2,      // Horse / Knight
+    E = 3,      // Elephant / Bishop
+    A = 4,      // Advisor / Guard
+    G = 5,      // General / King
+    C = 6,      // Cannon
+    S = 7       // Soldier / Pawn
 } P_TypeCode;
 
 typedef struct {
