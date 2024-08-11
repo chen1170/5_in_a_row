@@ -59,6 +59,15 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    // Exit if size is < 2
+    if (size < 2) {
+        if (rank == 0) {
+            printf("Error: Must have at least 2 processes to run the game\n");
+        }
+        MPI_Finalize();
+        return 1;
+    }
+    
     // Seed the random number generator
     gettimeofday(&tv, NULL);
     srand((rank + 1) * tv.tv_usec);
