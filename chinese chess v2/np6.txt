@@ -1,0 +1,33 @@
+Running performance tests...
+Testing non-parallel AI...
+Game over: max moves limit reached.. Draw!
+Serial tasks for game: 4678
+AI cannot find a valid move.
+Draw!
+Serial tasks for game: 584
+AI cannot find a valid move.
+Draw!
+Serial tasks for game: 1567
+AI cannot find a valid move.
+Draw!
+Serial tasks for game: 2346
+RED wins!
+Serial tasks for game: 3280
+
+Total time for 5 games with 6 processes for mode 1: 17.578123 seconds
+
+Testing parallel AI...
+Game over: max moves limit reached.. Draw!
+Game over: max moves limit reached.. Draw!
+Game over: max moves limit reached.. Draw!
+Game over: max moves limit reached.. Draw!
+Game over: max moves limit reached.. Draw!
+
+Total time for 5 games with 6 processes for mode 2: 8.162734 seconds
+Total parallel time: 8.162154 seconds (99.99%)
+
+Process 2 terminating... 4654 tasks completed.
+Process 5 terminating... 5277 tasks completed.
+Process 1 terminating... 4469 tasks completed.
+Process 3 terminating... 4566 tasks completed.
+Process 4 terminating... 4434 tasks completed.
