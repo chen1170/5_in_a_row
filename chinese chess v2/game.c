@@ -269,7 +269,7 @@ static void get_human_move()
     // printf("Current player is %d\n", current_player);
     do
     {
-        printf("Enter your move (e.g., e6 e8): ");
+        printf("Enter your move (e.g., e6 e8): \n");
         scanf("%s", move_from);
         scanf("%s", move_to);
     } while (!parse_move(move_from, move_to, current_player));
