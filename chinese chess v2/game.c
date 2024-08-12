@@ -350,7 +350,8 @@ void run_game(int show_board, double *serial_time, double *parallel_time)
             printf("Draw!\n");
             if (current_mode == AI_VS_AI)
             {
-                printf("Serials tasks: %d\n", serial_tasks);
+                printf("Serial tasks for game: %d\n", serial_tasks);
+                serial_tasks = 0;
             }
             break;
         }
@@ -360,7 +361,8 @@ void run_game(int show_board, double *serial_time, double *parallel_time)
             printf("Game over: max moves limit reached.. Draw!\n");
             if (current_mode == AI_VS_AI)
             {
-                printf("Serials tasks: %d\n", serial_tasks);
+                printf("Serial tasks for game: %d\n", serial_tasks);
+                serial_tasks = 0;
             }
             break;
         }
@@ -377,7 +379,8 @@ void run_game(int show_board, double *serial_time, double *parallel_time)
             
             if (current_mode == AI_VS_AI)
             {
-                printf("Serials tasks: %d\n", serial_tasks);
+                printf("Serial tasks for game: %d\n", serial_tasks);
+                serial_tasks = 0;
             }
         }
         else
